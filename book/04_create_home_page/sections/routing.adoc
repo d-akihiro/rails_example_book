@@ -1,0 +1,102 @@
+[suppress='InvalidSymbol']
+=== ルーティング
+
+Webブラウザで
+link:http://localhost:3000/static_pages/home[http://localhost:3000/static_pages/home]
+へアクセスするとホーム画面が表示されるようになりました。
+
+これはこれで良いのですが、アプリケーションの初めの画面なのに、表示するときに毎回 `static_pages/home` まで指定するのは煩わしいです。
+そこで、ルートでホーム画面が表示されるようにルーティングを変更してみます。
+
+まず、現在のルーティングがどうなっているか確認します。
+`rails routs` コマンドで確認することができます。
+
+[source, console]
+.ルーティング確認
+----
+$ rails routes
+           Prefix Verb URI Pattern                  Controller#Action
+static_pages_home GET  /static_pages/home(.:format) static_pages#home
+
+----
+
+表示までに少しだけ時間がかかりますが、これはルーティングの生成を行なっているからです。
+
+rails routesにより表示された内容によると、現在 `/static_pages/home` というURLのGETリクエストにstatic_pagesコントローラのhomeアクションが割り当たっている事がわかります。
+
+コントローラとアクションは**<コントローラ名>#<アクション名>**という表記になります。
+この表記はRailsの至る所で使われる表現なので頭の片隅に置いておきましょう。
+
+また、 `<Prefix>_path` という名前のURLパスを取得するヘルパメソッドが生成されます。
+自動テストでstatic_pages_home_pathというメソッドを使用していましたね。
+
+このルーティングは `routes.rb` から生成されます。
+
+[source, rb]
+.config/routes.rb
+----
+Rails.application.routes.draw do
+  get 'static_pages/home'
+end
+----
+
+getメソッドに `static_pages/home` というURLパスだけを指定しています。
+この場合、暗黙的にstatic_pagesコントローラのhomeアクションへ紐づけられます。
+明示的に書くなら以下のようになります。
+
+[source, rb]
+.config/routes.rb
+----
+Rails.application.routes.draw do
+  get 'static_pages/home', to:'static_pages#home'
+end
+----
+
+toオプションが省略して表記されていたという事ですね。
+
+さて、ルートにStaticPagesのhomeアクションを割り当てるように `routes.rb` を変更します。
+ルートパスにアクションを割り当てる場合、getメソッドを使っても良いですが、
+ルートパスのアクションわりあてようのrootメソッドというものがあります。
+
+[source, rb]
+.config/routes.rb
+----
+Rails.application.routes.draw do
+  root 'static_pages#home'
+end
+----
+
+このようにrootメソッドを使用するとコントローラとアクションの指定だけで済みます。
+
+変更したら再度 `rails routs` コマンドで確認してみましょう。
+
+[source, console]
+----
+$ rails routes
+Prefix Verb URI Pattern Controller#Action
+  root GET  /           static_pages#home
+----
+
+ばっちりStaticPagesコントローラのhomeアクションがルートパスに設定されていますね。
+
+
+ルーティングを変更したので、Home画面表示のテストで使用していたURLパス取得用のヘルパメソッドが生成されなくなりました。
+テストを実行して見ると失敗ではなくエラーが出てしまいます。
+
+テストのURLパス取得用ヘルパメソッドをルートパスのURLパス取得するroot_pathに置き換えましょう。
+
+[source, rb]
+----
+require 'test_helper'
+
+class StaticPagesControllerTest < ActionDispatch::IntegrationTest
+  test "should get home" do
+    get root_path
+    assert_response :success
+    assert_select "title", "Home | Ruby on Rails Example"
+  end
+end
+----
+
+修正したら、テストを実行して観ましょう。
+バッチリテストが成功するようになりましたね。

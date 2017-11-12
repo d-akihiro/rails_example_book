@@ -1,0 +1,94 @@
+=== 環境構築
+
+環境構築に必要なツール（VirtualBox、Vagrant、git）が揃ったので、環境構築を始めます。
+
+==== 環境構築
+
+本手順ではWindows環境の 'c:/vagrant/rails_example_box' フォルダを使って環境を構築します。 +
+これ以外の環境を使う場合は、適宜読み替えてください。
+
+まず、全てのプログラムから**git bash**を起動します。
+
+.全てのプログラム
+image::images/all_programs.png[全てのプログラム]
+
+.git bash
+image::images/git_bash.png[git bash]
+
+**git bash**を起動したら、以下のコマンド実行します。 +
+（ 'c:/vagrant' フォルダがない想定です。すでにある場合は `mkdir` は必要ありません。）
+
+
+[source, console]
+.環境構築
+----
+$ mkdir c:/vagrant
+$ git clone https://github.com/d-akihiro/rails_example_box.git c:/vagrant/rails_example_box
+
+$ cd c:/vagrant/rails_example_box
+$ vagrant up
+----
+
+
+[NOTE]
+.gitを使用しない場合
+====
+あえてgitをインストールしない場合は、Git hubのページからアーカイブをダウンロードしてください。 +
+以下のGithubのページの**Download ZIP**でダウンロードできます。
+
+link:https://github.com/d-akihiro/rails_example_box[https://github.com/d-akihiro/rails_example_box]
+
+. Githubページ
+image:images/github_repository.png[Git hub]
+====
+
+
+インターネットの速度やPCのスペックによりますが、1〜2時間くらいで環境構築が完了します。
+
+==== 動作確認
+
+チュートリアルで作成するアプリのサンプルを仮想マシンにダウンロードされているはずです。 +
+環境が正しく構築されていることを確認するために動かしてみましょう。
+
+まず、ホストOSの 'c:/vagrant/rails_example_box/work' フォルダ内に 'sample_rails_example' というフォルダが出来ていることを確認してください。 +
+これが、チュートリアルで作成するアプリのサンプルです。 +
+ホストOSの 'c:/vagrant/rails_example_box/work' フォルダを仮想マシン内の './work' フォルダと共有フォルダに設定してあります。 +
+チュートリアルではこの共有フォルダ内でアプリ開発を行うことで、ホストOS上のエディタからファイル編集を行えます。
+
+次に、既に仮想マシンは起動した状態になっているので、以下のコマンドで仮想マシンに接続し、サンプルのWebアプリケーションを起動します。
+
+[source, console]
+.環境動作確認
+----
+$ vagrant ssh
+
+$ cd ./work/sample_rails_example
+$ rails server --bind 0.0.0.0
+----
+
+ホストOSからWebブラウザで link:http://localhost:3000[http://localhost:3000] へアクセスするとアプリの画面が表示されます。
+
+.サンプルアプリ
+image::images/sample_app.png[サンプルアプリ]
+
+動作確認はとれたので、仮想マシンを停止しましょう。 +
+まずは、Ctrl+cでWebサーバを停止し、 `exit` コマンドでゲストOSからログアウトします。
+
+[source, console]
+.ログアウト
+----
+<Ctrl+c>
+$ exit
+----
+
+次に、仮装マシンを停止します。 +
+仮想マシンの停止は `vagrant halt` コマンドです。
+
+[source, console]
+.仮想マシン停止
+----
+$ vagrant halt
+----
+
+これで環境構築は完了です。
+お疲れ様です。

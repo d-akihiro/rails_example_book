@@ -1,0 +1,119 @@
+=== ユーザコントローラ作成
+
+Userモデルを操作してユーザを保存するUserコントローラを作成します。
+
+ホーム画面のStaticPagesコントローラを作った時と同じように`rails generate controller` でコントローラを作成します。
+
+今回は説明の都合でgeneratorによるアクション生成は行いません。
+
+[source, console]
+.ユーザコントローラ生成
+----
+$ rails generate controller Users
+Running via Spring preloader in process 3205
+      create  app/controllers/users_controller.rb
+      invoke  erb
+      create    app/views/users
+      invoke  test_unit
+      create    test/controllers/users_controller_test.rb
+      invoke  helper
+      create    app/helpers/users_helper.rb
+      invoke    test_unit
+      invoke  assets
+      invoke    coffee
+      create      app/assets/javascripts/users.coffee
+      invoke    scss
+      create      app/assets/stylesheets/users.scss
+----
+
+空のUsersコントローラが作成されます。
+
+[source, rb]
+.app/controllers/users_controller.rb
+----
+class UsersController < ApplicationController
+end
+----
+
+次にルーティングを設定します。
+
+**resources**メソッドを使うと、CRUD系操作を行う場合に必要となる一通りのアクションがルーティングに登録されます。
+
+[source, rb]
+.config/routes.rb
+----
+Rails.application.routes.draw do
+  root 'static_pages#home'
+  resources :users # <1>
+end
+----
+<1> CRUD操作のパス追加
+
+`routes` コマンドでどんなパスが追加されたか確認してみましょう。
+
+[source, console]
+.ルーティングの確認
+----
+$ rails routes
+   Prefix Verb   URI Pattern               Controller#Action
+     root GET    /                         static_pages#home
+    users GET    /users(.:format)          users#index
+          POST   /users(.:format)          users#create
+ new_user GET    /users/new(.:format)      users#new
+edit_user GET    /users/:id/edit(.:format) users#edit
+     user GET    /users/:id(.:format)      users#show
+          PATCH  /users/:id(.:format)      users#update
+          PUT    /users/:id(.:format)      users#update
+          DELETE /users/:id(.:format)      users#destroy
+----
+
+登録されたのは以下のパスです。
+
+[options="header"]
+|====
+| HTTPメソッド  | URL               | アクション | 名前付きルート         | 用途
+| GET           | /users            | index       | users_path            | すべてのユーザーを一覧するページ
+| POST          | /users            | create      | users_path            | ユーザーを作成するアクション
+| GET           | /users/new        | new         | new_user_path         | ユーザーを新規作成するページ (ユーザー登録)
+| GET           | /users/:id/edit  | edit        | edit_user_path(user)  | :idのユーザーを編集するページ(:idにユーザのIDが入る)
+| GET           | /users/:id       | show        | user_path(user)       | :idのユーザーを表示するページ(:idにユーザのIDが入る)
+| PATCH         | /users/:id       | update      | user_path(user)       | ユーザーを更新するアクション(部分置き換え)
+| PUT           | /users/:id       | update      | user_path(user)       | ユーザーを更新するアクション(全置き換え)
+| DELETE        | /users/:id       | destroy     | user_path(user)       | ユーザーを削除するアクション
+|====
+
+本来はここで登録されたパスに対応するアクションを全て実装するべきなのですが、今回はユーザの新規作成とユーザ情報の表示しか実装しません。
+
+なので、必要なアクションだけ登録するようにonlyオプションで制限をかけます。
+
+[source, rb]
+.config/routes.rb
+----
+Rails.application.routes.draw do
+  root 'static_pages#home'
+
+  resources :users, only: [:new, :show, :create]
+end
+----
+
+`routes` コマンドで想定通りにルーティングが設定されたことを確認してみます。
+
+[source, console]
+.ルーティングの確認
+----
+$ rails routes
+   Prefix Verb   URI Pattern               Controller#Action
+     root GET    /                         static_pages#home
+          POST   /users(.:format)          users#create
+ new_user GET    /users/new(.:format)      users#new
+     user GET    /users/:id(.:format)      users#show
+----
+
+これでルーティングは設定されたので、パスは有効になりましたが肝心なアクションはまだ実装していません。
+
+そのため、Webブラウザから
+link:http://localhost:3000/users/1[http://localhost:3000/users/1]
+などの追加したパスを表示しようとしてもアクションが見つからずエラーになります。
+
+.アクション未実装エラー
+image::images/unknown_action.png[アクション未実装エラー]

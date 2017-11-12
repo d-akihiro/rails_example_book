@@ -1,0 +1,8 @@
+/images/*
+.DS_Store
+.idea
+Gemfile.lock
+*.pdf
+*.iml
+**/images/*
+**/elements/*

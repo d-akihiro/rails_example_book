@@ -1,0 +1,41 @@
+=== editor
+
+チュートリアルとはいえ開発では、テキストエディタは重要です。 +
+好みのエディタを使用するのが一番よろしいですが、いくつかエディタを紹介します。
+
+==== Atom
+
+GitHubが開発しているテキストエディタです。
+非常に多くのプラグインが公開されています。
+
+以下からダウンロード: +
+link:https://atom.io[https://atom.io]
+
+とりあえずRuby開発をするなら、以下のプラグインは必須でしょう。
+
+* language-ruby （rubyのハイライト）
+* language-ruby-on-rails （railsファイル（erbなど）のハイライト）
+* file-icon （ファイルのアイコン追加）
+
+ホストOSにRubyをインストールしてあるなら、以下もあると便利です。
+
+* autocomplete-ruby （補完）
+* linter-ruby （構文チェック）
+
+あとは、次のプラグインがあると便利かつ楽しいでしょう。
+
+* atom-beautify （フォーマッタ）
+* git-plus （バージョン管理。git必須）
+* active-power-mode （コンボ！コンボ！）
+
+==== Visual Studio Code
+
+MS社が開発しているテキストエディタです。
+こちらもたくさんの拡張機能が公開されています。
+
+以下からダウンロード: +
+link:https://code.visualstudio.com/download[https://code.visualstudio.com/download]
+
+以下のプラウグインをインストールしておくと良いでしょう。
+
+* Ruby

@@ -1,0 +1,72 @@
+=== Vagrant
+
+Vagrantとは仮想化ソフトの操作を簡単に行うためのツールです。 +
+Vagrantで出来ることは基本的には仮想化ソフトのGUIからも実現可能ですが、Vagrantを使用すると同じ環境を簡単に他のマシンで構築することができます。 +
+Vagrantの公式ページからインストーラをダウンロードして、ウィザードに従ってインストールしてください。
+
+Vagrant公式ページ: + link:https://www.vagrantup.com[https://www.vagrantup.com]
+
+.Vagrant
+image::images/vagrant_top.png[Vagrant トップページ]
+
+
+.Windowsの場合の注意点
+****
+VagrantではゲストOS（仮想マシン上のOS）へアクセスする際にSSHを使用します。 +
+Unix系のOSなら問題ありませんが、Windowsの場合は標準でSSHクライアントはないので、SSHクライアントをどこかから持ってくる必要があります。 +
+CygWinやTeraTerm、最近だとBash on Ubuntu on Windowsとかもありますが、今回はWindows版のgitに同梱されているSSHクライアントを使用します。 +
+（詳しくは <<_git,git>> 参照）
+****
+
+
+.アンインストール
+****
+Vagrantをアンインストールする場合、ローカルに残っているboxファイルを削除してからアンインストールを行った方がよろしいです。 +
+仮想マシン作成のためにダウンロードしたboxファイルは明示的に消さない限り残り続けるためです。
+
+`box list` コマンドでbox名の一覧を表示できるので、そこに表示されたbox名を `box remove` コマンドで指定することでboxを削除することができます。
+
+[source, console]
+.box削除
+----
+$ vagrant box list
+<box名の一覧>
+
+$ vagrat box remove <box名>
+----
+
+Vagrant自体のアンインストールは以下で行えます。
+
+.Windowsの場合
+----
+アンインストールはコントロールパネルから行える。
+----
+
+.Macの場合
+[source, console]
+----
+$ rm -rf /opt/vagrant
+$ rm -f /usr/local/bin/vagrant
+$ sudo pkgutil --forget com.vagrant.vagrant
+----
+
+詳しくは公式ページ参照: +
+https://www.vagrantup.com/docs/installation/uninstallation.html[https://www.vagrantup.com/docs/installation/uninstallation.html]
+
+****
+
+==== コマンド
+
+今回必要になりそうなVagrantのコマンドを記載しておきます。
+
+[options="header"]
+.コマンド
+|====
+| コマンド | 説明
+| vagrant up | 仮装マシンを起動。初回のみ仮想マシン作成とプロビジョニングも実行。
+| vagrant ssh | 仮想マシンにSSH接続
+| vagrant halt | 仮想マシンを停止
+| vagrant destroy | 仮想マシンを破棄
+| vagrant box list | 追加済みのboxの一覧を表示
+| vagrant box remove <box名> | boxを削除する
+|====

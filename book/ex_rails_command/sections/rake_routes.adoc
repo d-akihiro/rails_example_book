@@ -1,0 +1,9 @@
+==== ルーティング確認（rake routes）
+
+設定されているルーティングの内容を確認する。
+
+[source, console]
+.使い方
+----
+$ rake routes
+----

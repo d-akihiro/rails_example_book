@@ -1,0 +1,414 @@
+=== ユーザ登録（new、create）
+
+ユーザ登録画面を実装します。
+
+==== アクション（new）
+
+newアクションを実装します。
+newアクションでは単純に空のUserモデルを作成すれば良いだけです。
+
+[source, rb]
+.app/controllers/users_controller.rb
+----
+class UsersController < ApplicationController
+  def show
+    @user = User.find(params[:id])
+  end
+
+  def new
+    @user = User.new
+  end
+end
+----
+
+==== ビュー
+
+newアクションに対応したユーザ登録画面のビューを作成します。
+
+入力した値をsubmitでpostするようにします。
+
+入力する項目は以下の4つです。
+
+* ユーザ名（name）
+* メールアドレス（email）
+* パスワード（password）
+* パスワード確認（password_confirmation）
+
+Railsではform_forメソッドでフォームを作成します。
+fomr_forメソッドには対象のモデルを渡します。
+
+この時渡したモデルによってsubmitにより呼び出すアクションが切り替わります。
+DBへ保存前のモデルであればcreateアクション、DBへ保存済みのモデルであればupdateアクションに対応するパスを呼び出します。
+
+ここで呼び出すパスはモデルに対応するデフォルトのパスです。
+createアクションとupdateアクションに特殊なパスを対応させる場合はform_forメソッドにオプションで対象のパスを指定する必要があります。
+
+とりあえず、今回はデフォルトのままで問題ないので、モデルのみ指定する形とします。
+
+[source, erb]
+.app/views/users/new.html.erb
+----
+<% provide(:title, 'Sign up') %>
+<h1>Sign up</h1>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <%= form_for(@user) do |f| %>
+      <%= f.label :name %>
+      <%= f.text_field :name, class: "form-control" %>
+      <%= f.label :email %>
+      <%= f.email_field :email, class: "form-control" %>
+      <%= f.label :password %>
+      <%= f.password_field :password, class: "form-control" %>
+      <%= f.label :password_confirmation, "Confirmation" %>
+      <%= f.password_field :password_confirmation, class: "form-control" %>
+
+      <%= f.submit "Create my account", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+----
+
+Webブラウザで
+link:http://localhost:3000/users/new[http://localhost:3000/users/new]
+を表示してみます。
+
+.ユーザ作成画面
+imgage::images/sign_up.png[ユーザ作成画面]
+
+ちょっとレイアウトが不恰好なので `custom.scss` を編集して、レイアウトを調整します。
+
+[source]
+.custom.scss
+----
+input, textarea, select, .uneditable-input {
+  border: 1px solid #bbb;
+  width: 100%;
+  margin-bottom: 15px;
+  -moz-box-sizing:    border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing:         border-box;
+}
+
+input {
+  height: auto !important;
+}
+----
+
+Webブラウザで
+link:http://localhost:3000/users/new[http://localhost:3000/users/new]
+を再度表示してみます。
+
+.ユーザ作成画面
+imgage::images/sign_up_new.png[ユーザ作成画面]
+
+今度は良さそうです。
+
+==== アクション（new）
+
+**new**アクションを実装します。
+
+formに入力した項目は `:user` に紐づけられたハッシュ内に各ラベル名で格納されます。
+
+paramsメソッドで `:user` のハッシュを取得し、Userモデルを作成します。
+そして、作成したUserモデルを保存すればnewアクションの実装はおおよそ完了ですね。
+
+[source, rb]
+.app/controllers/users_controller.rb
+----
+class UsersController < ApplicationController
+  def show
+    @user = User.find(params[:id])
+  end
+
+  def new
+    @user = User.new
+  end
+
+  def create
+    @user = User.new(params[:user])
+    if @user.save
+      redirect_to @user
+    else
+      render 'new'
+    end
+  end
+end
+----
+
+保存失敗時はrenderメソッドでユーザ登録画面（newアクションに対応するView）を再度表示します。
+
+保存成功時は保存したユーザのユーザ表示画面へリダイレクトするようにしています。
+
+さて、これで処理内容的には良さそうですが、実際にこれを動作させるとエラーが発生します。
+
+ユーザ登録画面で適当な値を入力しCreate my accountボタンを押してみましょう。
+
+.アプリケーションエラー
+image::image/forbidden_attributes_error.png[アプリケーション]
+
+これはフレームワークにアサイメント脆弱性への対応が入っているためです。
+
+以前のRailsでは上記で保存はできていたのですが、送られてきたパラメータをそのまま使うと悪意のあるユーザによってフォームにはない入力項目（内部的なフラグなど）まで外から書き換えることができるようになってしまいます。
+これで昔GitHubが攻撃されたりしました。
+
+そのため、渡されたパラメータをそのままDB更新には使用できないように対策が取られました。
+この問題はRailsだけではなくマッピング機能を持つ他の全てのフレームワークが持つ脆弱性のため、他のフレームワーク（Spring FrameworkやASPなど）にも該当します。
+
+この脆弱性は結局想定した入力項目がそのまま通るのが問題なので、システムで想定した入力項目以外は弾くようになっています。
+
+Railsでは**permit**メソッドで必要な項目へ明示的に許可を与えることでアサイメント脆弱性への対応としています。
+
+では、permitメソッドでUserモデル作成に使用する値へ許可を与える**user_params**メソッドを実装しましょう。
+
+[source, rb]
+.app/controllers/users_controller.rb
+----
+class UsersController < ApplicationController
+  def show
+    @user = User.find(params[:id])
+  end
+
+  def new
+    @user = User.new
+  end
+
+  def create
+    @user = User.new(user_params)
+    if @user.save
+      redirect_to @user
+    else
+      render 'new'
+    end
+  end
+
+  private
+
+  def user_params
+    params.require(:user).permit(:name, :email, :password,
+                                 :password_confirmation)
+  end
+end
+----
+
+これでcreateメソッドによるユーザ保存処理が動作するようになったはずです。
+
+試してみましょう。
+
+image:aaaaa.png[]
+
+ユーザの保存が成功し、保存したユーザのユーザ表示画面が表示されました。
+
+==== 入力エラー
+
+現状のままではバリデーションでNGとなる内容を入力された場合、保存しようとするとなにも言わずにユーザ登録画面を再表示します。
+
+機能的には問題ありませんが、不親切なので保存に失敗したことと、どの項目の入力がどのようによろしくなかったか表示するようにしましょう。
+
+まずはエラーメッセージを表示する部分を実装します。
+
+ユーザ登録画面のビューに直接実装しても良いのですが、ごちゃごちゃして読みにくくなるので、別ファイルで実装します。
+
+アクションと直接対応しないビューはファイル名の先頭に_（アンダーバー）を付けることで区別します。
+
+バリデーションエラーが発生すると、モデルの**errors**フィールドにエラーが格納されます。
+**errors.full_messages**にエラーメッセージが格納されるので、格納されたエラーメッセージをリスト表示します。
+
+[source, erb]
+.app/views/shared/_error_messages.html.erb
+----
+<% if @user.errors.any? %>
+  <div id="error_explanation">
+    <div class="alert alert-danger">
+      The form contains <%= pluralize(@user.errors.count, "error") %>.
+    </div>
+    <ul>
+    <% @user.errors.full_messages.each do |msg| %>
+      <li><%= msg %></li>
+    <% end %>
+    </ul>
+  </div>
+<% end %>
+----
+
+次にユーザ登録画面のビューに_error_messages.html.erbを組み込みます。
+
+renderメソッドで描画するのですが、この時指定する名前には先頭の_（アンダーバー）を含みません。
+
+
+[source, erb]
+.app/views/users/new.html.erb
+----
+<% provide(:title, 'Sign up') %>
+<h1>Sign up</h1>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <%= form_for(@user) do |f| %>
+      <%= render 'shared/error_messages' %>
+      <%= f.label :name %>
+      <%= f.text_field :name, class: 'form-control'  %>
+
+      <%= f.label :email %>
+      <%= f.email_field :email, class: 'form-control'  %>
+
+      <%= f.label :password %>
+      <%= f.password_field :password, class: 'form-control'  %>
+
+      <%= f.label :password_confirmation, "Confirmation" %>
+      <%= f.password_field :password_confirmation, class: 'form-control'  %>
+
+      <%= f.submit "Create my account", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>
+----
+
+あとは、エラーメッセージとエラーとなった項目を判りやすいように赤色で表示するために `custom.scss` を編集します。
+
+[source, scss]
+.app/assets/stylesheets/custom.scss
+----
+#error_explanation {
+  color: red;
+  ul {
+    color: red;
+    margin: 0 0 30px 0;
+  }
+}
+
+.field_with_errors {
+  @extend .has-error;
+  .form-control {
+    color: $state-danger-text;
+  }
+}
+----
+
+これで入力エラーの原因が判りやすくなりました。
+
+image:image/sign_up_error.png[]
+
+==== テスト
+
+ユーザの保存成功と失敗の実装ができました。
+
+テストも実装しましょう。
+
+ユーザの新規登録のテストは、次の流れで行います。
+
+1. ユーザ登録画面を表示する（エラーメッセージ非表示）
+2. 各入力項目を入力し、ボタンを押下する（postする）
+3. 結果を確認する
+  * 成功の場合:ユーザ表示画面を表示
+  * 失敗の場合:ユーザ登録画面を表示(エラーメッセージ表示)
+
+これをコントローラの単体テストとして実施するのは不適切です。
+出来ればこの流れでテストを実施するべきでしょう。
+
+そこで、今回は統合テスト（integration test）を実装します。
+
+統合テストの実装方法は、基本的には単体テストと同じです。
+まずはRailsコマンドで統合テストの雛形を生成します。
+
+統合テストは `rails generate integration_test` で生成できます。
+
+[source, console]
+. ユーザ登録の統合テスト生成
+----
+$ rails generate integration_test users_signup
+Running via Spring preloader in process 15037
+      invoke  test_unit
+      create    test/integration/users_signup_test.rb
+----
+
+ログに表示されたように、統合テストは `test/integration` 以下に配置します。
+
+先ほどの流れのテストを実装します。
+まずは入力エラーによる登録失敗時を実装しましょう。
+
+[source, rb]
+.test/integration/users_signup_test.rb
+----
+require 'test_helper'
+
+class UsersSignupTest < ActionDispatch::IntegrationTest
+  # test "the truth" do
+  #   assert true
+  # end
+  test 'invalid signup information' do
+
+    # <1>
+    get new_user_path
+
+    # <2>
+    assert_select 'div#error_explanation', 0
+    assert_select 'div.field_with_errors input.form-control', 0
+
+    # <3>
+    assert_no_difference 'User.count' do
+      post users_path, params: { user: { name:  '',
+                                         email: 'user@invalid',
+                                         password:              'foo',
+                                         password_confirmation: 'bar' } }
+    end
+
+    # <4>
+    assert_template 'users/new'
+
+    # <5>
+    assert_select 'div#error_explanation'
+    assert_select 'div.field_with_errors input.form-control', 4
+  end
+end
+----
+
+<1> ユーザ新規登録画面を表示する
+<2> 初期表示時はエラー表示はない
+<3> 全ての入力項目（4項目）を入力エラーとなる内容として、ユーザ登録（post）を実行する。ユーザ登録（post）実行後、ユーザ数は変わらない。
+<4> ユーザ登録実行後、ユーザ新規登録画面が表示される
+<5> 表示されたユーザ新規登録画面にエラーメッセージが表示されている。また、全ての入力項目（4項目）にエラーが出ている。
+
+ユーザ新規登録画面での入力エラーのテストが画面の操作に沿った形で実装できました。
+
+統合テストではこのようにWebブラウザからサーバへの要求-応答を対象としたテストを行います。
+
+次にユーザの登録成功時のテストを実装します。
+
+ちなみに、ユーザの登録成功時に他の画面へリダイレクトします。
+
+リダイレクトの動作は、クライアントへの応答でリダイレクト指示を出すことにより、それを受け取ったWebブラウザが応答内容に従ってリクエストを行います。
+
+テストコードでも同様に明示的にリダイレクトを行う必要があります。
+応答に応じたリダイレクトを実行するには**follow_redirect**メソッドを使用します。
+
+[source, rb]
+----
+require 'test_helper'
+
+class UsersSignupTest < ActionDispatch::IntegrationTest
+
+  test 'valid signup information' do
+    # <1>
+    get new_user_path
+
+    # <2>
+    assert_difference 'User.count', 1 do
+      post users_path, params: { user: { name:  'Example User',
+                                         email: 'user@example.com',
+                                         password:              'password',
+                                         password_confirmation: 'password' } }
+    end
+
+    # <3>
+    follow_redirect!
+    assert_template 'users/show'
+  end
+end
+----
+
+<1> ユーザ新規登録画面を表示する
+<2> ユーザ登録を実行する。ユーザ数が1人増える。
+<3> リダイレクトを実行すると、ユーザ表示画面が表示される。
+
+ユーザ新規登録画面からユーザの登録を成功するケースのテストが実装できました。

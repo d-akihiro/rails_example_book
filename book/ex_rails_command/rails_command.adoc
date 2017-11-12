@@ -1,0 +1,30 @@
+== Railsコマンド
+
+本ドキュメントで使用するRailsコマンドとRakeタスクです。
+
+=== Rails
+
+Railsコマンドです。
+
+include::sections/rails_new.adoc[]
+
+include::sections/rails_generate_controller.adoc[]
+
+include::sections/rails_generate_model.adoc[]
+
+include::sections/rails_generate_migration.adoc[]
+
+include::sections/rails_server.adoc[]
+
+include::sections/rails_console.adoc[]
+
+=== Rake
+
+Rakeタスクです。
+`rails test` とかでも実行できます。
+
+include::sections/rake_routes.adoc[]
+
+include::sections/rake_test.adoc[]
+
+include::sections/rake_db.adoc[]

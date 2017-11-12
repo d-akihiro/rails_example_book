@@ -1,0 +1,118 @@
+=== 権限管理
+
+さて、ログイン機能を実装しましたが、このままでは単にヘッダの表示を切り替える機能です。
+
+そこでちょっとした権限管理を実装して見ましょう。
+
+==== ログイン中の確認
+
+そこで、いくつかのページをログイン中でなくてはユーザ表示画面は表示出来ないようにして見ましょう。
+
+コントローラで**before_action**を使用すると、アクションの実行前に指定した処理を行うことが出来ます。
+Usersコントローラのshowアクション実行前にログイン中かどうか判断し、ログイン中でなければログイン画面へリダイレクトさせましょう。
+
+[source, rb]
+----
+class UsersController < ApplicationController
+  # <1>
+  before_action :logged_in_user, only: [:show]
+
+  private
+  # <2>
+  def logged_in_user
+    unless logged_in?
+      flash[:danger] = 'Please log in.'
+      redirect_to login_url
+    end
+  end
+end
+----
+
+<1> showアクション前にlogged_in_userを実行する
+<2> logged_in_userを追加した。ログイン中でなければ、ログイン画面へリダイレクトする。フラッシュメッセージを表示する。
+
+テストを実装します。
+今回は単一の動作ですし、単体テストで良いですね。
+ログイン済みの場合、ユーザ表示画面を表示しようとすると、そのままユーザ表示画面が表示されます。フラッシュメッセージは表示されません。
+ログイン済みではない場合、ユーザ表示画面を表示しようとすると、ログイン画面へリダイレクトされます。フラッシュメッセージが表示されます。
+
+[source, rb]
+----
+class UsersControllerTest < ActionDispatch::IntegrationTest
+  def setup
+    @user       = users(:akihiro)
+  end
+
+  test 'should show user when logged in' do
+    post login_path, params: { session: { email: @user.email,
+                                          password: 'password' }}
+    get user_path(@user)
+    assert flash.empty?
+    assert_template 'users/show'
+  end
+
+  test 'should redirect user when not logged in' do
+    get user_path(@user)
+    assert_not flash.empty?
+    assert_redirected_to login_url
+  end
+end
+----
+
+==== ユーザの判別
+
+ログインしたユーザ自身以外のユーザ表示画面は表示できないようにしましょう。
+ログイン中のユーザ以外でユーザ表示画面を表示しようとした場合、ルート画面にリダイレクトさせましょう。
+
+[source, rb]
+----
+class UsersController < ApplicationController
+  before_action :logged_in_user, only: [:show]
+  # <1>
+  before_action :correct_user,   only: [:show]
+
+  private
+  # <2>
+  def correct_user
+      @user = User.find(params[:id])
+      redirect_to(root_url) unless @user == current_user
+  end
+end
+----
+
+<1> showアクション前にcorrect_userを実行する
+<2> correct_userを追加した。ログイン中のユーザがパラメータ指定したユーザでない場合、ルート画面へ遷移する
+
+テストを実装しましょう。
+まずfixturesファイルで設定しているテスト用のユーザは1人しかいないので、もう一人追加します。
+
+[source, yml]
+----
+michael:
+  name: Michael Example
+  email: michael@example.com
+  password_digest: <%= User.digest('password') %>
+----
+
+あとは先ほどと同様に単体テストを実装します。
+別のユーザでログインした状態で、他の人のユーザ表示画面を表示しようとします。
+フラッシュメッセージが表示され、ルート画面へリダイレクトされるはずです。
+
+
+[source, rb]
+----
+class UsersControllerTest < ActionDispatch::IntegrationTest
+  def setup
+    @user       = users(:akihiro)
+    @other_user       = users(:michael)
+  end
+
+  test 'should show user when logged in' do
+    post login_path, params: { session: { email: @other_user.email,
+                                          password: 'password' }}
+    get user_path(@user)
+    assert_not flash.empty?
+    assert_redirected_to root_url
+  end
+end
+----

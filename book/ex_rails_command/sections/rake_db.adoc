@@ -1,0 +1,19 @@
+==== マイグレーション実行（rake db:migrate）
+
+未実行のマイグレーションを実行する。
+
+[source, console]
+.使い方
+----
+$ rake db:migrate [VERSION=バージョン番号] [オプション]
+----
+
+[options="header"]
+|====
+| タスク | 説明
+| rakd db:migrate | 未実行のマイグレーションを実行する
+| rake db:migrate:reset | databaseを一度削除してもう一度作成し、db:migrate実行
+| rake db:reset | databaseを一度削除してもう一度作成する。（マイグレーションは行わない）
+| rake db:version | databaseに実行したマイグレーションを確認
+| rake db:rollback | 直前のマイグレーションを元に戻す
+|====

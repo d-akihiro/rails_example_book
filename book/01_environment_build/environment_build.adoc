@@ -1,0 +1,25 @@
+== 開発環境
+
+チュートリアルを始めるには開発環境を構築する必要があります。
+ここでつまづくと一瞬でやる気が消え失せるので、ある意味アプリ作成よりも重要なポイントです。
+
+今回は各自の環境の違いを考える必要がないように、仮想マシン上に開発環境を構築します。 +
+以下の環境を想定しています。
+
+* Virtual Box（仮想化ソフト）
+* Vagrant
+* ubuntu 32bit
+* ruby 2.4.2
+* ruby on rails 5.1.4
+
+include::sections/vagrant.adoc[]
+
+include::sections/virtual_box.adoc[]
+
+include::sections/git.adoc[]
+
+include::sections/build.adoc[]
+
+include::sections/tmux.adoc[]
+
+include::sections/editor.adoc[]

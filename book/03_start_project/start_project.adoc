@@ -1,0 +1,9 @@
+== プロジェクトの開始
+
+include::sections/boot_vm_machine.adoc[]
+
+include::sections/create_project.adoc[]
+
+include::sections/rails_folder.adoc[]
+
+include::sections/rails_server.adoc[]

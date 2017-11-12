@@ -1,0 +1,49 @@
+==== プロジェクト作成（rails new）
+
+マイグレーションファイルを作成する。
+
+[source, console]
+.使い方
+----
+$ rails generate migration 名前 [カラム名:型]  [オプション]
+----
+
+[suppress='InvalidSymbol']
+生成されるマイグレーションファイルのファイル名は `<タイムスタンプ>_名前(スネークケース).rb` となる。
+`rails g migration` と省略しても良い。
+
+[options="header"]
+.オプション
+|====
+| オプション | 説明 | デフォルト
+| -o, -orm=名前 | 使用するO/Rマッパーを指定 | active_record
+| -f, --force | ファイルが存在する場合に上書きする |
+| -s, --skip | 既に存在するファイルについてはスキップ |
+|====
+
+[options="header"]
+.カラムの型
+|====
+| 型名 | 説明
+| string | 文字列
+| text | 長い文字列
+| integer | 整数
+| float | 浮動小数
+| decimal | 精度の高い小数
+| datetime | 日時
+| timestamp | より細かい日時
+| time | 時間
+| date | 日付
+| binary | バイナリデータ
+| boolean | Boolean型
+|====
+
+カラムの肩が未指定の場合はstringになる。
+
+[source, console]
+.使用例
+----
+$ rails generate migration AddTitleToPage title:string
+----
+
+インデックスを作成するなどする場合は、生成されたマイグレーションファイルを編集する。

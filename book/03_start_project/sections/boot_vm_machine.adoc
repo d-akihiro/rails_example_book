@@ -1,0 +1,33 @@
+=== 仮想マシン起動
+
+環境構築で作成した仮想マシンを起動します。
+
+まずはsshの使用できるコンソールを開きます。
+
+本ドキュメントの手順で環境を作成している場合は、**Git Bash**を使用します。
+全てのプログラムからBash Gitを選択してコンソールを開いてください。
+
+.全てのプログラム
+image::images/all_programs.png[全てのプログラム]
+
+.git bash
+image::images/git_bash.png[git bash]
+
+`Vagrantfile` のあるフォルダ（手順通りなら `c:/vagrant/rails_example_box` ）へ移動し、 `vagrant up` コマンドで仮想マシンを起動します。
+
+[source, console]
+.仮想マシン起動
+----
+$ cd c:/vagrant/rails_example_box
+$ vagrant up
+----
+
+仮想マシンが起動したら、 `vagrant ssh` コマンドでゲストOSへログインします。
+
+[source, console]
+.仮想マシンへ接続
+----
+$ vagrant ssh
+----
+
+この後の手順のRailsのコマンドは、このゲストOSへログインしたコンソールから実行します。

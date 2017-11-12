@@ -1,0 +1,18 @@
+==== テスト実行（rake test）
+
+テストを実行する。
+
+[options="header"]
+.タスク
+|====
+| タスク | 説明
+| rake test | 全てのテストを実行
+| rake test テストコード | 指定したテストコードを実行
+| rake test:integration | インテグレーションテストを実行
+|====
+
+[source, console]
+.使用例
+----
+$ rake test test/controller/users_controller_test.rb test/controller/sessions_controller_test.rb
+----

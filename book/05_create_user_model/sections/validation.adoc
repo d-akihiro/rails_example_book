@@ -1,0 +1,514 @@
+=== バリデーション
+
+ActiveRecordはDBのレコードなので、データの整合性を保つ必要があります。
+
+データの整合性を保つ上で重要なのはバリデーション（妥当性の確認）です。
+
+バリデーションを実装していきましょう。
+
+名前、メールアドレスのバリデーションは以下とします。
+
+[options="header"]
+.バリデーション
+|========================================================================
+| 項目           | 空欄 | 最大文字列長 | パターン           | 一意性
+| 名前           | NG   | 50           | `-`                | OK
+| メールアドレス | NG   | 255          | メールアドレス形式 | NG
+|========================================================================
+
+空欄は名前・メールアドレスどちらもNGとします。最大文字列長は名前50文字、メールアドレス255文字。
+メールアドレスはメールアドレス形式（ `ローカル部@ドメインの形式` ）以外はNGとします。
+
+また、同姓同名のユーザはOKとしますが、登録したメールアドレスの重複はNGとします。
+（ログインに使用するユーザ名にはメールアドレスを使用する予定です）
+
+実装するバリデーションの種類は以下の4つになります。
+
+* 空欄（empty）
+* 最大文字列長（maximum length）
+* パターン（pattern）
+* 一意性（unique）
+
+では、一つづつ実装していきましょう。
+
+[suppress='InvalidSymbol']
+==== 空欄（empty）
+
+ユーザの名前とメールアドレスは必ず登録する仕様とします。
+まずは空欄バリデーションのテストコードを実装します。
+
+[source, rb]
+.test/models/user_test.rb
+----
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  # test "the truth" do
+  #   assert true
+  # end
+  def setup
+    @user = User.new(name: 'Example User', email: 'user@example.com') # <1>
+  end
+
+  test 'should be valid' do # <2>
+    assert @user.valid?
+  end
+
+  test 'name should be present' do # <3>
+    @user.name = '   '
+    assert_not @user.valid?
+  end
+
+  test 'email should be present' do # <4>
+    @user.email = '   '
+    assert_not @user.valid?
+  end
+end
+----
+
+<1> テストで使用する正常なユーザ情報です。
+<2> バリデーションOKとなるケースです。
+<3> ユーザの名前が空欄のためバリデーションNGとなるケースです。
+<4> ユーザのメールアドレスが空欄のためバリデーションNGとなるケースです。
+
+テストを実行すると空欄のバリデーションが実装されていないので、3と4の `@user.valid?` が成功してしまい、テスト失敗となります。
+
+[source, console]
+.空欄バリデーションテスト（失敗）
+----
+$ rails test
+<省略>
+4 runs, 5 assertions, 2 failures, 0 errors, 0 skips
+----
+
+このテストを成功させるように、空欄のためのバリデーションを実装します。
+
+ActiveRecordにはバリデーションを設定する**validates**メソッドが用意されています。
+
+validatesメソッドには空欄バリデーション設定のための**presence**オプションが用意されているので、これを使用して空欄のバリデーションを実装します。
+
+[source, rb]
+./app/models/user.rb
+----
+class User < ApplicationRecord
+  validates :name, presence:true
+  validates :email, presence:true
+end
+----
+
+これで空欄のバリデーションが実装されたはずです。
+テストを実行して見ます。
+
+[source, console]
+.空欄バリデーションテスト（成功）
+----
+$ rails test
+<省略>
+4 runs, 5 assertions, 0 failures, 0 errors, 0 skips
+----
+
+テストが成功しました。
+
+空欄のバリデーションが想定通り動作していることが確認できました。
+
+==== 最大文字列長（maximum length）
+
+最大文字列長のバリデーションを実装します。
+
+まずは、最大文字列長がNGのパターンのテストを実装します。
+
+[source, rb]
+.test/models/user_test.rb
+----
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  # 省略
+
+  test 'name should not be too long' do # <1>
+    @user.name = 'a' * 51
+    assert_not @user.valid?
+  end
+
+  test 'email should not be too long' do # <2>
+    @user.email = 'a' * 244 + '@example.com'
+    assert_not @user.valid?
+  end
+end
+----
+<1> 名前の文字数がNG（51文字）の場合のテストケース
+<2> メールアドレスの文字数がNG（256文字）の場合のテストケース
+
+Rubyでは `'文字列' * n` とすると、'文字列'をn回繰り返した文字列になります。
+
+`'a' * 51` は'a'を51回繰り返した文字列となり、 `'a' * 244` は'a'を244回繰り返した文字列となります。
+（これに'@example.com'（12文字）を連結するので、256文字になる）
+
+テストを実行すると実装した<1>と<2>が失敗します。
+
+[source, console]
+.最小文字列長バリデーションテスト（失敗）
+----
+$ rails test
+<省略>
+6 runs, 7 assertions, 2 failures, 0 errors, 0 skips
+----
+
+このテストを成功するように、最大文字列長のバリデーションを実装していきます。
+
+validatesメソッドには文字列長のバリデーションを設定するための**length**オプションが提供されているので、これを使って最大文字列長を設定します。
+
+[source, rb]
+./app/models/user.rb
+----
+class User < ApplicationRecord
+  validates :name, presence:true, length:{maximum:50}
+  validates :email, presence:true, length:{maximum:255}
+end
+----
+
+実装するとこうなります。
+lengthオプションは最大文字列長（maximum）だけではなく、最小文字列長（minimum）など指定できるので、ハッシュ形式で指定しています。
+
+実際にバリデーションが動作するかテストを実行して確認してみます。
+
+[source, console]
+.最小文字列長バリデーションテスト（成功）
+----
+$ rails test
+<省略>
+6 runs, 7 assertions, 0 failures, 0 errors, 0 skips
+----
+
+[suppress='InvalidSymbol']
+==== パターン（pattern）
+
+文字列のパターンで判定するバリデーションを実装します。
+
+メールアドレスの形式は'ローカル部@ドメイン'の形式ですが、もう少し細かくみていくと次のような規則を持っています。
+
+* ローカル部で使えるのは英数字 アンダースコア （_） プラス （+） ハイフン （-） ドット （.） のいずれかを少なくとも1文字以上繰り返す
+* ローカル部とドメインの間にアットマーク（@）
+* ドメイン部で使えるのは英数字、ハイフン、ドット
+* ドメイン部の先頭は英数字、アンダースコア
+* ドメイン部のドットは2回以上繰り返さない
+* トップレベルドメインは.に続く英字の繰り返しとする。また、必ず存在する。
+
+実際のメールアドレスはもっと複雑ですが、ここではこの規則でチェックします。
+
+まずは上記の各規則がNGとなるパターンのテストを実装します。
+
+
+[source, rb]
+.test/models/user_test.rb
+----
+
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  # 省略
+
+  test 'email validation should reject invalid addresses' do
+    invalid_addresses = %w[user,@example.com # <1>
+                           user_at_example.com # <2>
+                           user@example,foo.com # <3>
+                           user@.example.com # <4>
+                           user@example..com # <5>
+                           user@example.123 # <6>
+                           user@example] # <7>
+    invalid_addresses.each do |invalid_address|
+      @user.email = invalid_address
+      assert_not @user.valid?, "#{invalid_address.inspect} should be invalid"
+    end
+  end
+end
+----
+
+<1> ローカル部にカンマ（利用できない文字）を使用
+
+<2> ローカル部とドメイン部の間にアットマークがない
+
+<3> ドメイン部にカンマ（利用できない文字）を使用
+
+<4> ドメイン部の先頭にドットを使用
+
+<5> ドメイン部のドットが繰り返す
+
+<6> トップレベルドメインが数字（使用できない文字）
+
+<7> トップレベルドメインがない
+
+
+`配列.each do |要素| 処理 end` は配列の要素に対して、一つづつ処理を実行します。
+
+テストコードだと、invalid_addressesに格納した各NGパターンのメールアドレスに対して、一つづつバリデーションを実行しています。
+
+テストが失敗したとき、どのメールアドレスで失敗したのか判るようにassert_notメソッドにメールアドレスを含む文字列を渡しています。
+
+テストを実行すると当然失敗します。
+
+[source, console]
+.メールアドレス規則のバリデーションテスト（失敗）
+----
+$ rails test
+
+<省略>
+
+Failure:
+UserTest#test_email_validation_should_reject_invalid_addresses [/Users/radlon/github/github/rails_example/test/models/user_test.rb:40]:
+"user,@example.com" should be invalid
+
+<省略>
+
+Finished in 0.466952s, 14.9908 runs/s, 17.1324 assertions/s.
+7 runs, 8 assertions, 1 failures, 0 errors, 0 skips
+----
+
+テストが失敗するとそこでそのテストは中断されるので、先頭のメールアドレスの失敗だけがコンソールに出力されます。
+
+このテストが成功するようにバリデーションを実装します。
+
+validateメソッドには正規表現でチェックするformatオプションが提供されているので、これを使ってメールアドレス形式のチェックを実装します。
+
+正規表現で先ほどの規則を表現すると `\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z` になります。
+
+[options="header"]
+.メールアドレス形式の正規表現
+|====
+| 正規表現 | 内容
+| \A       | 文字列の先頭
+| [\w+\-.]+ | 英数字、アンダースコア(/wは[a-zA-Z_0-9]と同等)、
+プラス(+)、ハイフン (\-)、ドット (.) の
+いずれかを少なくとも1文字以上繰り返す
+| @ | あっとまーく
+| [a-z\d\-]+ | 英字(a-z), 数字(\d), ハイフン(\-)の
+いずれかを少なくとも1文字以上繰り返す
+| (\.[a-z\d\-]+)* |
+ [ドット(/.)]
+ [英字(a-z), 数字(\d), ハイフン(\-)の繰り返し]の形式( '.exmample' など)を0回以上繰り返す
+ (出現しない場合もある)
+| \. | どっと
+| [a-z]+ | 英字を少なくとも1文字以上繰り返す
+| \z | 文字列の最後
+|====
+
+これを実装します。
+
+[source, rb]
+./app/models/user.rb
+----
+class User < ApplicationRecord
+    validates :name, presence:true,length:{maximum:50}
+
+    VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i # <1>
+    validates :email, presence:true,length:{maximum:255}, format: {with:VALID_EMAIL_REGEX} # <2>
+end
+----
+<1> 正規表現
+<2> formatオプションを指定
+
+正規表現はvalidatesメソッドのformatオプションへのハッシュ**with**で指定します。
+
+Rubyでは正規表現を `/.../` の形式で表現します。
+ちなみに正規表現の最後についている `i` は大文字小文字区別の無視を表しています。
+
+早速テストを実行してみます。
+
+[source, console]
+.メールアドレス規則のバリデーションテスト（成功）
+----
+$ rails test
+<省略>
+7 runs, 13 assertions, 0 failures, 0 errors, 0 skips
+----
+
+無事にメールアドレス規則のバリデーションが動作することを確認できました。
+
+==== 一意性（unique）
+
+一意性のバリデーションを実装します。
+
+ユーザの登録メールアドレスはそろぞれ異なるものとします。
+なので、すでに他のユーザが登録済みのメールアドレスは登録できないようにします。
+
+また、メールアドレスの大文字小文字の区別は行わないものとします。
+
+まずはテストを実装します。
+
+[source, rb]
+.test/models/user_test.rb
+----
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  def setup
+    @user = User.new(name: 'Example User', email: 'user@example.com')
+  end
+
+  # 省略
+
+  test 'email addresses should be unique' do # <1>
+    duplicate_user = @user.dup
+    duplicate_user.email = @user.email.upcase
+    @user.save
+    assert_not duplicate_user.valid?
+  end
+end
+----
+
+<1> メールアドレスが重複するテストケース
+
+@userをdupメソッドで複製し、@user保存後、複製したユーザのバリデーションチェックを行なっています。
+複製したユーザのメールアドレスは@userと同じなので、バリデーションはNGとなるはずです。
+
+大文字小文字の区別を行なっていないことも確認するために複製したユーザのメールアドレスはupcaseメソッドで大文字に変換しています。
+
+[source, console]
+----
+
+----
+
+テストを実行すると当然失敗します。
+
+このテストが成功するように一意性のバリデーションを実装します。
+
+validatesメソッドには一意性を設定するための**uniqueness**オプションが提供されているので、これで実装します。
+ただし、今回は単純な一意性のチェックではありません。
+
+
+[suppress='InvalidSymbol']
+`validates :email, uniqueness: true` のように指定した場合、大文字・小文字を区別した単純な一意性チェックとなります。
+今回は大文字・小文字の区別を行いたくないので、 `validates :email, uniqueness: {case_sensitive:false}` と指定することで大文字小文字の区別を行わない一意性チェックとします。
+
+[source, rb]
+./app/models/user.rb
+----
+class User < ApplicationRecord
+    validates :name, presence:true,length:{maximum:50}
+
+    VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
+    validates :email, presence:true,length:{maximum:255}, format: {with:VALID_EMAIL_REGEX}, uniqueness: {case_sensitive:false}
+end
+----
+
+これで一意性のバリデーションの実装ができました。
+
+テストを実行してみると、一意性のバリデーションが想定通り動作していることが確認できます。
+
+[source, console]
+----
+----
+
+ただし、これはあくまでもRailsのModelとしての一意性です。
+他システムなどからDBへアクセスされた場合、この一意性を保つことはできません。
+なので、DB側でも一意性を設定してやる必要があります。
+DBのメールアドレスカラムへユニーク属性を付けたインデックスを追加することで、一意性を保つようにします。
+
+DB定義の操作はマイグレーションで行います。
+一意性をDB定義に追加するためのマイグレーションファイルを作成しましょう。
+
+まずは雛形のマイグレーションファイルを生成します。
+[source, console]
+----
+$ rails generate migration add_index_to_users_email
+Running via Spring preloader in process 16799
+      invoke  active_record
+      create    db/migrate/20170910090234_add_index_to_users_email.rb
+----
+
+次にマイグレーションファイルで**add_index**メソッドを使ってインデックスを追加する処理を追加します。
+add_indexメソッドの**unique**オプションを指定することで、追加するインデックスへユニーク属性を付与します。
+
+[source, rb]
+----
+class AddIndexToUsersEmail < ActiveRecord::Migration[5.1]
+  def change
+    add_index :users, :email, unique: true
+  end
+end
+----
+
+マイグレーションファイルができたらマイグレーションを実行します。
+
+[source, console]
+----
+$ rails db:migrate
+== 20170910090234 AddIndexToUsersEmail: migrating =============================
+-- add_index(:users, :email, {:unique=>true})
+   -> 0.0099s
+== 20170910090234 AddIndexToUsersEmail: migrated (0.0101s) ====================
+----
+
+==== 保存前の処理
+
+使用するDBによっては、大文字・小文字を区別する場合があります。
+この場合、メールアドレスの一意性を保てません。
+
+いろいろな対策方法があるとおもますが、今回はDBに保存するメールアドレスは小文字とする。というシステムとしてのルールを設けることで、この問題を回避します。
+
+この対策を行うためにはアプリケーションでのDB保存時にメールアドレスを小文字にdowncaseする必要があります。
+
+まずはテストケースを作成します。
+
+[source, rb]
+----
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+
+  def setup
+    @user = User.new(name: "Example User", email: "user@example.com")
+  end
+  .
+  .
+  .
+  test "email addresses should be unique" do # <1>
+    duplicate_user = @user.dup
+    duplicate_user.email = @user.email.upcase
+    @user.save
+    assert_not duplicate_user.valid?
+  end
+
+  test "email addresses should be saved as lower-case" do # <2>
+    mixed_case_email = "Foo@ExAMPle.CoM"
+    @user.email = mixed_case_email
+    @user.save
+    assert_equal mixed_case_email.downcase, @user.reload.email
+  end
+end
+----
+
+<1> 大文字のみのメールアドレスのテストケース
+<2> 大文字・小文字が混ざったメールアドレスのテストケース
+
+
+テストを実行すると当然失敗します。
+
+[source, console]
+----
+$ rails test
+----
+
+このテストが成功するように、DB保存時のメールアドレスのdowncaseを実装していきます。
+
+ActiveRecordによるDB保存前の処理は**before_save**コールバックで実装します。
+before_saveコールバックへメールアドレスのdowncase処理を書くことで、DB保存時のメールアドレスのdowncaseを実装できます。
+
+[source, rb]
+----
+class User < ApplicationRecord
+  before_save { self.email = email.downcase } # <1>
+
+  validates :name, presence: true, length: { maximum: 50 }
+
+  VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
+  validates :email, presence: true, length: { maximum: 255 }, format: { with: VALID_EMAIL_REGEX }, uniqueness: { case_sensitive: false }
+end
+----
+<1> DB保存前のコールバック処理
+
+テストを実行してみると、DB保存前のdowncaseが動作していることが確認できます。
+
+[source, console]
+----
+----

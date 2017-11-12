@@ -1,0 +1,199 @@
+[suppress='InvalidSymbol']
+=== レイアウト作成
+
+ホーム画面のレイアウトを作成していきましょう。
+
+ヘッダ部分はアプリケーション全体で使用するので、 `application.html.erb` で実装します。
+
+homeアクションのビューにはWelcomeメッセージとサインイン画面へのリンクを表示します。
+
+まずは、homeアクションのビューを実装しましょう。
+
+[source, erb]
+.app/views/static_pages/home.html.erb
+----
+<% provide(:title,"Home") %>
+<div class="center jumbotron">
+  <h1>Home Page</h1>
+  <h2>Welcome to my Home Page</h2>
+
+  <%= link_to "Sign up now!", "#", class: "btn btn-lg btn-primary" %>
+</div>
+----
+
+サインイン画面はまだ実装していないので、リンク先は `#` としておきます。
+
+次に'application.html.erb'へヘッダ部分を実装します。
+
+[source, erb]
+.app/views/layouts/application.html.erb
+----
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= yield(:title) %> | Ruby on Rails Example</title>
+    <%= csrf_meta_tags %>
+
+    <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
+    <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
+  </head>
+  <body>
+    <header class="navbar navbar-fixed-top navbar-inverse">
+      <div class="container">
+        <%= link_to "Ruby on Rails Example", root_path, id: "logo" %>
+        <nav>
+          <ul class="nav navbar-nav navbar-right">
+            <li><%= link_to "Home",   root_path %></li>
+            <li><%= link_to "Log in", '#' %></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <div class="container">
+      <%= yield %>
+    </div>
+  </body>
+</html>
+----
+
+こちらもログイン画面のリンクは `#` としておきます。
+
+
+さてとりあえずこの状態の画面をWebブラウザで確認して見ましょう。
+
+link:http://localhost:3000[http://localhost:3000]
+
+.CSS適用前のホーム画面
+image::images/static_pages_home_no_css.png[CSS適用前のホーム画面]
+
+とてもダサいテキストサイトの出来上がりです。
+
+このままじゃよろしくないのでCSSを使ってレイアウトを整えていきます。
+
+まずbootstrapを適用します。
+
+Gemfileを開き、bootstrap-sassを追加してください。
+
+[source, rb]
+.Gemfile
+----
+gem 'rails', '~> 5.1.3'
+
+gem 'bootstrap-sass', '3.3.7' # <1>
+----
+<1> bootstrap-sassを追加
+
+Gemfileを編集したらサーバを再起動します。
+
+これでアプリケーションにbootstrapが組み込まれました。
+次にbootstrapのスタイルシートを画面に適用します。
+
+Railsアプリでは `app/assets/stylesheets` 以下のscssファイルを全てのページで読み込みます。
+
+scssファイルというのはcssをもっと抽象的に書けるようにしたメタ言語です。
+基本的にはcssと同じですが、変数や宣言ブロックの継承などが使えます。
+可読性を良くしたCSSという感じです。
+
+`app/assets/stylesheets/custom.scss` を作成してbootstrapを全画面に適用します。
+
+[source, scss]
+.app/assets/stylesheets/custom.scss
+----
+@import "bootstrap-sprockets";
+@import "bootstrap";
+----
+
+`@import` でbootstrapを追加しました。
+`@import` とはcssの `@import url()` とおおよそ同じで、
+指定したスタイルシートを取り込みます。
+
+bootstrapの適用が完了しましたので、早速Webブラウザで
+link:http://localhost:3000[http://localhost:3000]
+を表示して見ましょう。
+
+.bootstrap適用後
+image::images/static_pages_home_bootstrap.png[bootstrap適用後]
+
+bootstrapを適用しただけでだいぶ良くなりました。
+もうWebアプリ作成にbootstrapは必須ですね。
+
+あとは細かいレイアウトを調整します。
+
+`custom.scss` に細かいレイアウト調整の定義を追加していきます。
+細かい内容については特に解説は入れません。
+
+[source, scss]
+.app/assets/stylesheets/custom.scss
+----
+@import "bootstrap-sprockets";
+@import "bootstrap";
+
+body {
+  padding-top: 60px;
+}
+
+section {
+  overflow: auto;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.center {
+  text-align: center;
+  h1 {
+  margin-bottom: 10px;
+  }
+}
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1;
+}
+
+h1 {
+  font-size: 3em;
+  letter-spacing: -2px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+h2 {
+  font-size: 1.2em;
+  letter-spacing: -1px;
+  margin-bottom: 30px;
+  text-align: center;
+  font-weight: normal;
+  color: $gray-light;
+}
+
+p {
+  font-size: 1.1em;
+  line-height: 1.7em;
+}
+
+#logo {
+  float: left;
+  margin-right: 10px;
+  font-size: 1.7em;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: -1px;
+  padding-top: 9px;
+  font-weight: bold;
+  &:hover {
+    color: white;
+    text-decoration: none;
+  }
+}
+
+----
+
+Webブラウザで
+link:http://localhost:3000[http://localhost:3000]
+を読み込み直して見ます。
+
+.ホーム画面作成完了
+image::images/static_pages_home_finish.png[ホーム画面作成完了]
+
+なかなか良い感じになりました。

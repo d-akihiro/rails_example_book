@@ -1,0 +1,42 @@
+=== Virtual Box
+
+仮想化ソフトをインストールします。 +
+今回はVagrantを使って仮想化ソフトを操作するため、Vagrantでサポートしている仮想化ソフトを選ぶ必要があります。
+とはいえ、Vagrantはほとんどの仮想化ソフトをサポートしているのでどれを選んでも問題はないでしょう。 +
+ここではVagrantで一番手厚いサポートを受けているVirtual Boxを使用することとします。 +
+virtual box公式サイトからインストーラをダウンロードして、ウィザードに従ってインストールしてください。
+
+Virtual Box公式サイト: +
+link:https://www.virtualbox.org[https://www.virtualbox.org]
+
+.Virtual Box
+image::images/virtual_box_top.png[Virtual Box トップページ]
+
+[CAUTION]
+====
+今回の手順では仮想マシンは32bitOSを使用するので問題ありませんが、64bitのOSを使用する場合はPCのUEFI(BIOS)画面で仮想化機能を有効にしている必要があります。 +
+この設定をしていない場合、64bitOSをインストールすることが出来ません。 +
+VirtualBoxのGUI画面から新規作成する場合も64bitOSが選択肢に出てきません。
+====
+
+.アンインストール
+****
+こういった開発系のツールをインストールする場合、インストール前にアンインストールの手段を確認しておくのは重要です。 +
+偶に適当に削除したせいでレジストリなどを手動で編集する羽目になることがあるのです。
+まあ、今回使用するツールはそんな心配はないのですが。
+
+.Windowsの場合
+----
+コントロールパネルからアンインストールすることができる。
+----
+
+.MacOSの場合
+----
+インストーラに同梱されている。
+VirtualBox_Uninstall.toolを使用することでアンインストールできる。
+----
+
+詳しくは公式ページ参照: +
+link:https://www.virtualbox.org/manual/ch02.html[https://www.virtualbox.org/manual/ch02.html]
+
+****

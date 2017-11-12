@@ -1,0 +1,23 @@
+==== コンソール起動（rails console）
+
+コンソール（irb）を起動する。
+
+[source, console]
+.使い方
+----
+$ rails console [環境(test/development/production)] [オプション]
+----
+
+[options="header"]
+.オプション
+|====
+| オプション | 説明 | デフォルト
+| -s, -sandbox | 終了時にデータベースに関する変更をロールバック |
+| -debugger | デバックモードで起動 |
+|====
+
+[source, console]
+.使用例
+----
+$ rails console
+----

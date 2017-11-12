@@ -1,0 +1,179 @@
+=== ユーザ表示（show）
+
+ユーザ表示画面を実装しましょう。
+
+==== アクション
+
+**show**アクションを実装します。
+まずは `routes` コマンドでshowアクションのパスを確認します。
+
+[source, console]
+.ルーティングの確認
+----
+$ rails routes
+   Prefix Verb   URI Pattern               Controller#Action
+     root GET    /                         static_pages#home
+          POST   /users(.:format)          users#create
+ new_user GET    /users/new(.:format)      users#new
+     user GET    /users/:id(.:format)      users#show
+----
+
+showアクションのパスは `/users/:id` となっています。
+パス中の `:id` はパラメータです。
+アクション内で**param**メソッドでパス中のラベル（ここの場合は `:id` ）を指定することで、パス中のパラメータを取得できます。
+`:id` にはUsersモデルのidが指定されるので、showアクションでは**find**メソッドを使って `:id` のユーザを検索し、指定されたユーザを取得します。
+
+[source, rb]
+.app/controllers/users_controller.rb
+----
+class UsersController < ApplicationController
+  def show
+    @user = User.find(params[:id])
+  end
+end
+----
+
+取得したユーザは `@user` に格納します。
+ビューではこの `@user` からユーザ情報を参照します。
+
+
+==== ビュー
+
+**show**アクションに対応するユーザ表示画面のビューを実装します。
+とはいえ、今回のユーザは名前のメールアドレスくらいしか表示する内容がないので、単純なレイアウトになります。
+とりあえず、まずは**show**アクションで取得したユーザ情報（ `@user` ）へアクセス出来ることを確認するために、名前とメールアドレスを単純に表示するだけの形で実装します。
+
+[source, erb]
+.app/views/users/show.html.erb
+----
+<%= @user.name %>, <%= @user.email %>
+----
+
+Webブラウザで
+http://localhost:3000/users/1[http://localhost:3000/users/1]
+を表示してみましょう。
+image:images/show.png[ユーザ表示(仮)]
+
+[NOTE]
+====
+当然ですが、ユーザが保存されていなければエラーが発生します。
+まだ新規作成画面を実装していないので、 `rails console` でユーザを保存してくらさい。
+====
+
+ユーザ情報（ `@user` ）へアクセス出来ることが確認できたので、レイアウトを簡単に整えます。
+title要素にはユーザの名前を埋め込むことにしましょう。
+[source, erb]
+.app/views/users/show.html.erb
+----
+<% provide(:title, @user.name) %>
+<h1>
+  <%= @user.name %>
+</h1>
+<h2>
+  (<%= @user.email %>)
+</h2>
+----
+
+Webブラウザで表示してみます。
+http://localhost:3000/users/1[http://localhost:3000/users/1]
+image:images/show.png[]
+表示内容が少ないですし、これで良いでしょう。
+
+==== テスト
+
+ユーザ表示画面のテストを実装します。
+ユーザ表示画面はDBに保存されたユーザを使用するので、テスト実施前にDBへテストで使用するユーザを保存しておく必要があります。
+今回は必要なユーザ数が少ないので、テストの**setup**メソッドで保存しても良いのですが、テストで必要なユーザ数が増えてくるとテストデータの管理が難しくなってきます。
+
+RailsにはDBのテストデータを管理するfixtureという機能があります。
+この機能を使うとfixtureファイルに記載したテストデータをテスト実行前にDBに保存してくれます。
+fixtureファイルはyaml形式なので、テストデータの管理が非常に楽になります。
+
+[NOTE]
+.yamlとは
+====
+yamlとはxmlなどと同じ構造化データやオブジェクトをシリアライズするデータ形式の一つです。
+
+インデントで階層構造を表現するのが特徴です。
+`<キー名>:<値>` の形式でハッシュを表現します。
+
+コメントは `#` 以降です。
+
+xmlと比べると複雑な表現が出来ませんが、人が見て構造が判りやすいので最近はちょっとした設定ファイルなどでよく使われています。
+
+====
+
+
+テストで使用するユーザ情報のfixtureファイルを作成しましょう。
+
+[source, yml]
+.test/fixtures/users.yml
+----
+akihiro:
+  name: Akihiro.D
+  email: d-akihiro@outlook.com
+  password_digest: password
+----
+
+こんな感じになります。
+ここで一つ問題があります。上記ではpassword_digestへpasswordという文字列を直接入れましたが、パスワード認証に使用する実際のpassword_digestは文字列をハッシュ化した値です。
+そこで文字列をハッシュ化する処理を実装して、fixtureファイルでのpassword_digest指定に使用するようにします。
+
+ハッシュ化はBCrypt::Passwordのcreateメソッドで作成します。
+ハッシュ化のコストの決め方はsecure_passwordを参照。
+
+link:https://github.com/rails/rails/blob/b965ce361b89ad33a4a4b422f8e564233926c723/activemodel/lib/active_model/secure_password.rb[secure_password.rb]
+
+[source, rb]
+.app/models/user.rb
+----
+class User < ApplicationRecord
+
+  def User.digest(string)
+    cost = ActiveModel::SecurePassword.min_cost ? BCrypt::Engine::MIN_COST : BCrypt::Engine::DEFAULT_COST
+    BCrypt::Password.create(string, cost: cost)
+  end
+end
+----
+
+そして、実装したdigest関数を使用してfixtureファイルへハッシュ化した値を指定するようにします。
+fixtureファイルからのRailsアプリの関数呼び出しはView（erbファイル）と同様です。
+
+[source, yml]
+.test/fixtures/users.yml
+----
+akihiro:
+  name: Akihiro.D
+  email: d-akihiro@outlook.com
+  password_digest: <%= User.digest('password') %>
+----
+
+テストデータにハッシュ化した値を入れることができました。
+
+[suppress='Contraction InvalidSymbol']
+テストコードで `users(:akihiro)` とすることでfixtureで保存したakihiroのUserモデルを取得出来ます。
+では、テストを実装しましょう。
+
+[source, rb]
+----
+class UsersControllerTest < ActionDispatch::IntegrationTest
+  def setup
+    @user       = users(:akihiro) # <1>
+  end
+
+  test 'should show user' do
+    # <2>
+    get user_path(@user)
+    assert_template 'users/show'
+  end
+end
+----
+<1> fixtureで用意したテストデータを取得
+<2> テストデータのユーザを表示
+
+テストを実行して、想定通りの動作になっていることを確認します。
+
+[source, console]
+----
+$ rails test
+----

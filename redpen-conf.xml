@@ -1,0 +1,27 @@
+<redpen-conf lang="ja">
+	<validators>
+		<validator name="SentenceLength">
+			<property name="max_len" value="120"/>
+		</validator>
+		<validator name="InvalidSymbol"/>
+		<validator name="KatakanaEndHyphen">
+			<property name="list" value="アンダーバー,エラー,バリデーションエラー,レイヤー,ドロップダウンメニュー"/>
+		</validator>
+		<validator name="KatakanaSpellCheck">
+			<property name="dict" value="katakana.dict" />
+		</validator>
+		<validator name="SectionLength">
+			<property name="max_num" value="1500"/>
+		</validator>
+		<validator name="SpaceBetweenAlphabeticalWord"/>
+		<validator name="CommaNumber"/>
+		<validator name="SuccessiveWord"/>
+		<validator name="JavaScript"/>
+		<validator name="JapaneseStyle"/>
+		<validator name="DoubleNegative"/>
+	</validators>
+	<symbols>
+		<!-- .はファイル名に使用する。使用箇所が多いので禁止文字から外す。 -->
+		<symbol name="FULL_STOP" value="。" before-space="false" after-space="false" invalid-chars="．"/>
+	</symbols>
+</redpen-conf>

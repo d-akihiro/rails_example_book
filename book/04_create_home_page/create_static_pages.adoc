@@ -1,0 +1,9 @@
+== ホーム画面
+
+include::sections/create_static_page.adoc[]
+
+include::sections/common_view.adoc[]
+
+include::sections/routing.adoc[]
+
+include::sections/create_layout.adoc[]

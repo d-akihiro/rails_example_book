@@ -1,0 +1,9 @@
+== ユーザモデル
+
+ユーザモデル作成を行なっていきます。
+
+include::sections/create_user_model.adoc[]
+
+include::sections/validation.adoc[]
+
+include::sections/add_password.adoc[]

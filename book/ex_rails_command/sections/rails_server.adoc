@@ -1,0 +1,28 @@
+==== サーバ起動（rails server）
+
+Railsサーバ（WEBrick）を起動する。
+
+[source, console]
+.使い方
+----
+$ rails server [オプション]
+----
+
+`rails s` と省略しても良い。
+
+[options="header"]
+.オプション
+|====
+| オプション | 説明 | デフォルト
+| -p, --port=port | サーバを起動するときのポート番号を指定 | 3000
+| -b, --binding=ip | バインドするIPアドレスを指定 | localhost
+| -d, --daemon | デーモンとしてサーバを起動 |
+| -u, --debugger | デバックモード |
+| -e, --environment=name | 環境（test/development/production）を指定してサーバを起動 | development
+|====
+
+[source, console]
+.使用例
+----
+$ rails server -b 0.0.0.0 -p 8080 -e production
+----

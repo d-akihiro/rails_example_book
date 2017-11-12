@@ -1,0 +1,19 @@
+
+=== RubyGems
+
+RailsはRubyGemsで配布されています。
+RubyGemsとはRuby公式のライブラリ管理ツールです。
+
+JavaでのMavenみたいなものです。
+
+.RubyGems
+image::images/rubygems.png[RubyGems]
+
+link:https://rubygems.org[https://rubygems.org]
+
+RubyGemsで配布されているライブラリのことをRubyではgemと呼びます。
+
+特にRailsではbundlerというアプリケーションで使用するgemを管理するgemが使われています。
+bundlerではアプリケーションのルートに設置した `Gemfile` というファイルに記載されたgemをインストールおよびバージョン更新を行います。
+Javaでの `pom.xml` や `build.xml` みたいなものですね。
+Rails以外でもたいていのRubyアプリケーションでbundlerは使用されているので、頭の隅に置いておくと良いでしょう。

@@ -1,0 +1,33 @@
+==== コントローラの生成（rails generate controller）
+
+コントローラとビューを生成する。
+
+[source, console]
+.使い方
+----
+$ rails generate controller 名前 [アクション名...]
+----
+
+コントローラの名前は対応するモデルの名前の複数形とするのが基本。
+アクション名を指定した場合、アクションとそれに対応するビューも生成される。
+
+[options="header"]
+.オプション
+|====
+| オプション | 説明 | デフォルト
+| --skip-route | config/routes.rbに追加しない |
+| -e, --template-engine=NAME | 使用するテンプレートエンジンを指定 | erb
+| -t, --test-framework=NAME | 使用するテストフレームワークを指定 | test_unit
+| --helper | ヘルパーを生成するか | true
+| --assets | アセットを生成するか | true
+| -f, --force | ファイルが存在する場合に上書きする |
+| -s, --skip | 既に存在するファイルについてはスキップ |
+|====
+
+オプションは基本的には未指定で良いはずです。
+
+[source, console]
+.使用例
+----
+$ rails generate controller Pages home
+----
