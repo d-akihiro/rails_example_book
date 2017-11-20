@@ -50,7 +50,7 @@ image:images/github_repository.png[Git hub]
 チュートリアルで作成するアプリのサンプルを仮想マシンにダウンロードされているはずです。 +
 環境が正しく構築されていることを確認するために動かしてみましょう。
 
-まず、ホストOSの 'c:/vagrant/rails_example_box/work' フォルダ内に 'sample_rails_example' というフォルダが出来ていることを確認してください。 +
+まず、ホストOSの 'c:/vagrant/rails_example_box/work' フォルダ内に 'rails_example_sample' というフォルダが出来ていることを確認してください。 +
 これが、チュートリアルで作成するアプリのサンプルです。 +
 ホストOSの 'c:/vagrant/rails_example_box/work' フォルダを仮想マシン内の './work' フォルダと共有フォルダに設定してあります。 +
 チュートリアルではこの共有フォルダ内でアプリ開発を行うことで、ホストOS上のエディタからファイル編集を行えます。
@@ -62,8 +62,8 @@ image:images/github_repository.png[Git hub]
 ----
 $ vagrant ssh
 
-$ cd ./work/sample_rails_example
-$ rails server --bind 0.0.0.0
+$ cd ~/work/rails_example_sample
+$ rails server --binding=0.0.0.0
 ----
 
 ホストOSからWebブラウザで link:http://localhost:3000[http://localhost:3000] へアクセスするとアプリの画面が表示されます。
