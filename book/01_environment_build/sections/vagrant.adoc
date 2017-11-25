@@ -4,7 +4,8 @@ Vagrantとは仮想化ソフトの操作を簡単に行うためのツールで�
 Vagrantで出来ることは基本的には仮想化ソフトのGUIからも実現可能ですが、Vagrantを使用すると同じ環境を簡単に他のマシンで構築することができます。 +
 Vagrantの公式ページからインストーラをダウンロードして、ウィザードに従ってインストールしてください。
 
-Vagrant公式ページ: + link:https://www.vagrantup.com[https://www.vagrantup.com]
+Vagrant公式ページ: +
+link:https://www.vagrantup.com[https://www.vagrantup.com]
 
 .Vagrant
 image::images/vagrant_top.png[Vagrant トップページ]
@@ -16,6 +17,17 @@ VagrantではゲストOS（仮想マシン上のOS）へアクセスする際に
 Unix系のOSなら問題ありませんが、Windowsの場合は標準でSSHクライアントはないので、SSHクライアントをどこかから持ってくる必要があります。 +
 CygWinやTeraTerm、最近だとBash on Ubuntu on Windowsとかもありますが、今回はWindows版のgitに同梱されているSSHクライアントを使用します。 +
 （詳しくは <<_git,git>> 参照）
+****
+
+.Windows7の場合の注意点
+****
+Vagrant1.9.7以上がWindows7では動作しないようです。 +
+そのため、Windows7の場合はVagrant1.9.6をインストールするようにしてください。
+
+link:https://releases.hashicorp.com/vagrant/1.9.6/[https://releases.hashicorp.com/vagrant/1.9.6/]
+
+Vagrant1.9.6では最新のVirtualBox5.2系以上は対応していません。VirtualBox5.1.30（5.1系以下）を使用してください。
+
 ****
 
 

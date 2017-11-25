@@ -19,6 +19,14 @@ image::images/virtual_box_top.png[Virtual Box トップページ]
 VirtualBoxのGUI画面から新規作成する場合も64bitOSが選択肢に出てきません。
 ====
 
+.Windows7の場合の注意点
+****
+Windows7の場合はVagnrant1.9.6を使用します。 +
+Vagrant1.9.6では最新のVirtualBox5.2系以上は対応していないため、VirtualBox 5.1.30（5.1系以下）をインストールするようにしてください。
+
+link:https://www.virtualbox.org/wiki/Download_Old_Builds_5_1[https://www.virtualbox.org/wiki/Download_Old_Builds_5_1]
+****
+
 .アンインストール
 ****
 こういった開発系のツールをインストールする場合、インストール前にアンインストールの手段を確認しておくのは重要です。 +
