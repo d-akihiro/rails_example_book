@@ -1,4 +1,8 @@
-== ホーム画面
+== 静的なページ
+
+ホーム画面を作成します。 +
+ホーム画面に必要なのはControllerとViewです。
+DBは不要なのでModelは要りません。
 
 include::sections/create_static_page.adoc[]
 

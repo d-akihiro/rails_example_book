@@ -14,13 +14,13 @@ image::images/homepage_prototype.png[ホーム画面のプロトタイプ]
 
 まだユーザ登録していない場合は、サインアップ画面へ進み名前とemailアドレス、パスワードを入力してユーザ登録を行います。
 
-.サインイン画面のプロトタイプ
-image::images/signin_prototype.png[サインイン画面のプロトタイプ]
+.ユーザ登録画面のプロトタイプ
+image::images/signin_prototype.png[ユーザ登録画面のプロトタイプ]
 
 ユーザ登録が完了すると、ログイン状態となり登録した自身のユーザ画面を表示します。
 
-.ユーザ画面のプロトタイプ
-image::images/userpage_prototype.png[ユーザ画面のプロトタイプ]
+.ユーザ情報画面のプロトタイプ
+image::images/userpage_prototype.png[ユーザ情報画面のプロトタイプ]
 
 既にユーザ登録済みであればログイン画面へ進みます。
 

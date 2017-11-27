@@ -1,0 +1,80 @@
+=== ユーザの判別
+
+ログイン中のユーザ自身以外のユーザ情報画面は表示できないようにします。 +
+ログイン中のユーザ以外のユーザ表示画面を表示しようとした場合、ルート画面にリダイレクトさせるようにします。
+
+==== 実装
+
+先ほどと同様にbefore_actionメソッドでユーザ情報画面表示(showアクション)の前に実行する処理を設定します。 +
+ログイン中のユーザが対象ユーザかどうか判定するcorrect_userメソッドを実装します。 +
+ログイン中のユーザはProfileボタンのリンク先でも使用したcurrent_userメソッドを使用します。 +
+パスの:idで指定されたIDのユーザとcurrent_userメソッドで取得したユーザが同一か判定し、同一でなければルートパスへリダイレクトします。 +
+以下のように実装してください。
+
+[source, ruby]
+.app/controllers/users_controller.rb
+----
+class UsersController < ApplicationController
+  # <1>
+  before_action :correct_user,   only: [:show]
+
+  private
+  # <2>
+  def correct_user
+      @user = User.find(params[:id])
+      redirect_to(root_url) unless @user == current_user
+  end
+end
+----
+
+<1> showアクション前にcorrect_userを実行する
+<2> correct_userを追加した。ログイン中のユーザがパラメータ指定したユーザでない場合、ルート画面へ遷移する
+
+
+==== テスト
+
+テストを実装しましょう。 +
+まずfixturesファイルで設定しているテスト用のユーザは1人しかいないので、もう一人追加します。
+
+[source, yml]
+.test/fixtures/users.yml
+----
+michael:
+  name: Michael Example
+  email: michael@example.com
+  password_digest: <%= User.digest('password') %>
+----
+
+あとは先ほどと同様に単体テストを実装します。
+別のユーザでログインした状態で、他の人のユーザ表示画面を表示しようとします。 +
+フラッシュメッセージが表示され、ルート画面へリダイレクトされるはずです。 +
+以下のように実装してください。
+
+[source, ruby]
+.test/controllers/users_controller_test.rb
+----
+class UsersControllerTest < ActionDispatch::IntegrationTest
+  def setup
+    @user       = users(:akihiro)
+
+    # <1>
+    @other_user       = users(:michael)
+  end
+
+  test 'should show user when logged in' do
+    # <2>
+    post login_path, params: { session: { email: @other_user.email,
+                                          password: 'password' }}
+    # <3>
+    get user_path(@user)
+    assert_not flash.empty?
+    assert_redirected_to root_url
+  end
+end
+----
+
+<1> 用意した別ユーザ
+
+<2> 別ユーザでログイン
+
+<3> ログインしたユーザと異なるユーザのユーザ情報画面を表示

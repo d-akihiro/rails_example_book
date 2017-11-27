@@ -1,0 +1,89 @@
+=== 一意性（unique）バリデーション
+
+一意性のバリデーションを実装します。 +
+ユーザのログインにはメールアドレスを使用する予定です。
+なので、すでに他のユーザが登録済みのメールアドレスは登録できないようにします。 +
+また、メールアドレスの性質上、大文字小文字の区別は行わないことにします。
+
+==== テスト
+
+まずはテストを実装します。 +
+`@user.dup` のようにdupメソッドを使用するとインスタンスをコピーすることができます。コピー元のユーザを保存した後、コピーしたユーザを保存することで同一のユーザを保存できるか確認します。
+
+それから、大文字小文字の区別を行わないことも確認したいので、コピー先のユーザのメールアドレスはupcaseメソッドで全て大文字に変換した状態とします。  +
+以下のように実装してください。
+
+[source, ruby]
+.test/models/user_test.rb
+----
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  # <1>
+  test 'email addresses should be unique' do
+    duplicate_user = @user.dup
+    duplicate_user.email = @user.email.upcase
+    @user.save
+    assert_not duplicate_user.valid?
+  end
+end
+----
+
+<1> メールアドレスが重複するテストケース
+
+テストを実行すると当然失敗します。 +
+このテストが成功するように一意性のバリデーションを実装します。
+
+==== 実装
+
+validatesメソッドには一意性を設定するための**uniqueness**オプションが提供されているので、これで実装します。
+
+[suppress='InvalidSymbol']
+ただし、今回は単純な一意性のチェックではありません。 大文字小文字を区別しない一意性チェックとする必要があります。 +
+`validates :email, uniqueness: true` のように指定した場合、大文字・小文字を区別した単純な一意性チェックとなってしまいます。 +
+`validates :email, uniqueness: {case_sensitive:false}` のようにcase_sensitiveをfalseに指定することで大文字小文字の区別を行わない一意性チェックが実装できます。
+
+[source, ruby]
+./app/models/user.rb
+----
+class User < ApplicationRecord
+    validates :name, presence:true,length:{maximum:50}
+
+    VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
+    validates :email, presence:true,length:{maximum:255}, format: {with:VALID_EMAIL_REGEX}, uniqueness: {case_sensitive:false} # <1>
+end
+----
+
+<1> 一意性のチェックを追加
+
+これで一意性のバリデーションの実装ができました。
+早速動作確認してみましょう。
+
+[source, console]
+.一意性バリデーションの確認
+----
+<1>
+$ rails console
+
+<2>
+irb> user = User.new(name: 'Example User', email: 'user@example.com')
+irb> duplicate_user = user.dup
+irb> duplicate_user.email = user.email.upcase
+
+<3>
+irb> user.save
+
+<4>
+irb> duplicate_user.valid?
+----
+
+<1> irb起動
+
+<2> ユーザを用意
+
+<3> ユーザを保存
+
+<4> 同一のメールアドレスの場合のバリデーションNGを確認
+
+一意性のバリデーションが想定通り動作していることが確認できました。 +
+テストを実行すると、先ほど実装したテストが成功するようになっています。

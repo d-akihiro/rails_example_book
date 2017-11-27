@@ -1,0 +1,103 @@
+=== セッション管理
+
+ログイン機能を実装するには、サーバへの一連のリクエストを一つのトランザクションとして扱えるようにする必要があります。
+
+HTTPリクエストはそれぞれ独立したトランザクションなので、これらを一つのトランザクションとして扱えるようにしなくてはHTTPリクエスト毎に認証を行う必要があるのです。
+
+この複数のリクエストをまとめたトランザクションのことをセッションと呼びます。
+
+Railsでは**session**メソッドを使って一時セッションを作成できます。
+今回はこれを使ってログインを実装しましょう。
+
+ログインしたら一時セッションを作成し、セッションにユーザIDを保存します。
+そして、次回以降のリクエストではセッションに保存されたユーザIDをみてログイン状態を判断します。
+
+.ログインの仕組み
+image::images/login_session.png[ログインの仕組み]
+
+[NOTE]
+.一時Sessionと永続Cookies
+====
+一時セッションの場合、ブラウザ再起動などを行うとセッションが破棄されてしまいます。
+
+ブラウザを閉じてもログイン状態を維持したい場合は、**cookies**メソッドを使って永続cookiesにユーザIDを保存します。
+
+ただし、永続cookiesは有効期間が長いため、セッションハイジャックの危険性が高くなります。
+これにたいして対策する必要があります。
+
+例えば、ユーザIDだけではなく有効期間を持つトークンも永続cookiesへ保存し、ログイン状態を確認する際にこのトークンのチェックも行うようにすることで、一時セッションと同様にセッションの有効期間を短くするという方法が考えられます。
+
+====
+
+[NOTE]
+.SessionとCookies
+====
+Railsのデフォルト設定ではsessoinメソッドによる一時セッションは、ブラウザのcookiesへセッションの内容を暗号化して保存する**CookieStore**という仕組みが使用されます。
+
+.CookieStore
+image::images/cookies_session.png[CookieStore]
+
+そこそこ安全ではありますが、秘密鍵が漏れるとあっさりと内容を見られてしまうので、致命的な情報を扱うのには向いていません。
+
+致命的な情報を扱うならブラウザのcookiesにはセッション識別子だけを保存し、セッションの内容はDBに保存する**ActiveRecordSessionStore**という仕組みを使うのが良いでしょう。
+
+.ActiveRecordSessionStore
+image::images/db_session.png[ActiveRecordSessionStore]
+
+ActiveRecordSessionStoreは**activerecord-session_store**というgemを入れることで簡単に導入できます。
+
+
+====
+
+
+セッションを管理するためのコントローラを作成します。 +
+ログイン画面表示のための**new**アクションも追加しておきましょう。
+
+アクションとしては他にもログイン（セッション作成）とログアウト（セッション破棄）が必要ですが、これらはViewが不要なので、generateコマンドでは生成しません。
+
+[source, console]
+.セッションコントローラ生成
+----
+$ rails generate controller Sessions new
+Running via Spring preloader in process 19696
+      create  app/controllers/sessions_controller.rb
+       route  get 'sessions/new'
+      invoke  erb
+      create    app/views/sessions
+      create    app/views/sessions/new.html.erb
+      invoke  test_unit
+      create    test/controllers/sessions_controller_test.rb
+      invoke  helper
+      create    app/helpers/sessions_helper.rb
+      invoke    test_unit
+      invoke  assets
+      invoke    coffee
+      create      app/assets/javascripts/sessions.coffee
+      invoke    scss
+      create      app/assets/stylesheets/sessions.scss
+----
+
+次にルーティング設定です。
+今回追加するリクエストは次のようにします。
+
+[options="header"]
+.セッションコントローラのルーティング
+|====
+| リクエスト | URL | アクション | 説明
+| GET | /login | new | ログイン画面表示
+| POST | /login | create | セッション作成(ログイン)
+| DELETE | /login | delete | セッション破棄(ログアウト)
+|====
+
+上記のルーティング設定を `routes.rb` に追加します。 +
+以下のように実装してください。
+
+[source, ruby]
+.config/routes.rb
+----
+Rails.application.routes.draw do
+  get '/login', to:'sessions#new'
+  post '/login', to:'sessions#create'
+  delete '/logout', to:'sessions#destroy'
+end
+----

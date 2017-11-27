@@ -1,11 +1,13 @@
-== ユーザーコントローラ
+== ユーザーController
 
 ユーザ登録機能を作成します。
 
 include::sections/create_controller.adoc[]
 
+include::sections/routing.adoc[]
+
 include::sections/create_show_action.adoc[]
 
 include::sections/create_new_action.adoc[]
 
-include::sections/create_flush_message.adoc[]
+include::sections/create_flash_message.adoc[]

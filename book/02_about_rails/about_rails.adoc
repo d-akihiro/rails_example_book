@@ -1,6 +1,6 @@
 == Ruby on Railsとは
 
-image:images/rails-logo.png[]
+image::images/rails-logo.png[]
 
 Ruby on Railsとはなにかについて簡単に説明します。 +
 それから、この後チュートリアルで作成するアプリケーションの仕様を簡単に紹介します。
@@ -9,4 +9,4 @@ include::sections/about_rails.adoc[]
 
 include::sections/about_ruby_gems.adoc[]
 
-include::sections/application_specification.adoc[]
+include::sections/applicaion_specification.adoc[]

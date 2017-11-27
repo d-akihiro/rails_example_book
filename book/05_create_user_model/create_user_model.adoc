@@ -1,9 +1,23 @@
-== ユーザモデル
+== ユーザModel
 
-ユーザモデル作成を行なっていきます。
+ユーザ情報を管理するModelを作成します。
 
 include::sections/create_user_model.adoc[]
 
 include::sections/validation.adoc[]
 
+include::sections/validation_empty.adoc[]
+
+include::sections/validation_maximum_length.adoc[]
+
+include::sections/validation_pattern.adoc[]
+
+include::sections/validation_unique.adoc[]
+
+include::sections/db_unique_index.adoc[]
+
+include::sections/before_save.adoc[]
+
 include::sections/add_password.adoc[]
+
+include::sections/validation_password.adoc[]

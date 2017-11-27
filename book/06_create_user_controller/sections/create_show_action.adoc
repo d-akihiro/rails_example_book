@@ -1,49 +1,39 @@
 === ユーザ表示（show）
 
-ユーザ表示画面を実装しましょう。
+ユーザ情報画面を実装します。 +
+ユーザ情報画面は '/users/:id(.:format)' のURIパターンの `:id` で指定されたIDのユーザの情報を表示します。 +
+現状で表示できる情報は名前とメールアドレスだけなので、これらを表示します。
 
-==== アクション
+==== アクション（show）
 
-**show**アクションを実装します。
-まずは `routes` コマンドでshowアクションのパスを確認します。
+ユーザ情報画面を表示するshowアクションを実装します。 +
+URIパターンの `:id` は**params**に格納されています。 `params[:id]` のようにすることで、値を取得できます。 +
+指定したIDのユーザを検索するにはUserModelの**find**メソッドを使用します。 +
+`User.find(<id>)` のように使用します。 +
+検索で見つけたユーザは@userに格納します。Viewではこの@userに格納されたユーザの情報を表示します。 +
+以下のように実装してください。
 
-[source, console]
-.ルーティングの確認
-----
-$ rails routes
-   Prefix Verb   URI Pattern               Controller#Action
-     root GET    /                         static_pages#home
-          POST   /users(.:format)          users#create
- new_user GET    /users/new(.:format)      users#new
-     user GET    /users/:id(.:format)      users#show
-----
-
-showアクションのパスは `/users/:id` となっています。
-パス中の `:id` はパラメータです。
-アクション内で**param**メソッドでパス中のラベル（ここの場合は `:id` ）を指定することで、パス中のパラメータを取得できます。
-`:id` にはUsersモデルのidが指定されるので、showアクションでは**find**メソッドを使って `:id` のユーザを検索し、指定されたユーザを取得します。
-
-[source, rb]
+[source, ruby]
 .app/controllers/users_controller.rb
 ----
 class UsersController < ApplicationController
+  # <1>
   def show
     @user = User.find(params[:id])
   end
 end
 ----
 
-取得したユーザは `@user` に格納します。
-ビューではこの `@user` からユーザ情報を参照します。
+<1> showアクションを実装
 
 
-==== ビュー
+==== View
 
-**show**アクションに対応するユーザ表示画面のビューを実装します。
-とはいえ、今回のユーザは名前のメールアドレスくらいしか表示する内容がないので、単純なレイアウトになります。
-とりあえず、まずは**show**アクションで取得したユーザ情報（ `@user` ）へアクセス出来ることを確認するために、名前とメールアドレスを単純に表示するだけの形で実装します。
+**show**アクションに対応するユーザ情報画面のViewを実装します。 +
+今回のユーザは名前のメールアドレスくらいしか表示する内容がないので、単純なレイアウトになります。 +
+とりあえず、まずは**show**アクションで取得したユーザ情報（ `@user` ）へViewからアクセス出来ることを確認するために、名前とメールアドレスを単純に表示するだけの形で実装します。
 
-[source, erb]
+[source, eruby]
 .app/views/users/show.html.erb
 ----
 <%= @user.name %>, <%= @user.email %>
@@ -52,17 +42,21 @@ end
 Webブラウザで
 http://localhost:3000/users/1[http://localhost:3000/users/1]
 を表示してみましょう。
-image:images/show.png[ユーザ表示(仮)]
+
+.ユーザ情報画面（仮）
+image::images/show_sample.png[ユーザ情報画面（仮）]
 
 [NOTE]
 ====
 当然ですが、ユーザが保存されていなければエラーが発生します。
-まだ新規作成画面を実装していないので、 `rails console` でユーザを保存してくらさい。
+まだ新規作成画面を実装していないので、 `rails console` でユーザを保存してからユーザ情報画面を表示してください。
 ====
 
-ユーザ情報（ `@user` ）へアクセス出来ることが確認できたので、レイアウトを簡単に整えます。
-title要素にはユーザの名前を埋め込むことにしましょう。
-[source, erb]
+ユーザ情報（ `@user` ）へアクセス出来ることが確認できたので、レイアウトを簡単に整えます。 +
+title要素にはユーザの名前を埋め込むことにしましょう。 +
+以下のように実装してください。
+
+[source, eruby]
 .app/views/users/show.html.erb
 ----
 <% provide(:title, @user.name) %>
@@ -75,18 +69,21 @@ title要素にはユーザの名前を埋め込むことにしましょう。
 ----
 
 Webブラウザで表示してみます。
-http://localhost:3000/users/1[http://localhost:3000/users/1]
-image:images/show.png[]
 表示内容が少ないですし、これで良いでしょう。
+
+http://localhost:3000/users/1[http://localhost:3000/users/1]
+
+.ユーザ情報画面
+image::images/show.png[ユーザ情報画面]
 
 ==== テスト
 
-ユーザ表示画面のテストを実装します。
-ユーザ表示画面はDBに保存されたユーザを使用するので、テスト実施前にDBへテストで使用するユーザを保存しておく必要があります。
+ユーザ表示画面のテストを実装します。 +
+ユーザ表示画面はDBに保存されたユーザを使用するので、テスト実施前にDBへテストで使用するユーザを保存しておく必要があります。 +
 今回は必要なユーザ数が少ないので、テストの**setup**メソッドで保存しても良いのですが、テストで必要なユーザ数が増えてくるとテストデータの管理が難しくなってきます。
 
-RailsにはDBのテストデータを管理するfixtureという機能があります。
-この機能を使うとfixtureファイルに記載したテストデータをテスト実行前にDBに保存してくれます。
+RoRにはDBのテストデータを管理するfixtureという機能があります。
+この機能を使うとfixtureファイルに記載したテストデータをテスト実行前にDBに保存してくれます。 +
 fixtureファイルはyaml形式なので、テストデータの管理が非常に楽になります。
 
 [NOTE]
@@ -94,9 +91,8 @@ fixtureファイルはyaml形式なので、テストデータの管理が非常
 ====
 yamlとはxmlなどと同じ構造化データやオブジェクトをシリアライズするデータ形式の一つです。
 
-インデントで階層構造を表現するのが特徴です。
-`<キー名>:<値>` の形式でハッシュを表現します。
-
+インデントで階層構造を表現するのが特徴です。 +
+`<キー名>:<値>` の形式でハッシュを表現します。 +
 コメントは `#` 以降です。
 
 xmlと比べると複雑な表現が出来ませんが、人が見て構造が判りやすいので最近はちょっとした設定ファイルなどでよく使われています。
@@ -105,6 +101,7 @@ xmlと比べると複雑な表現が出来ませんが、人が見て構造が�
 
 
 テストで使用するユーザ情報のfixtureファイルを作成しましょう。
+'users.yml' を以下のように編集してください。
 
 [source, yml]
 .test/fixtures/users.yml
@@ -115,16 +112,15 @@ akihiro:
   password_digest: password
 ----
 
-こんな感じになります。
-ここで一つ問題があります。上記ではpassword_digestへpasswordという文字列を直接入れましたが、パスワード認証に使用する実際のpassword_digestは文字列をハッシュ化した値です。
+ここで一つ問題があります。上記ではpassword_digestへpasswordという文字列を直接入れましたが、パスワード認証に使用する実際のpassword_digestは文字列をハッシュ化した値です。 +
 そこで文字列をハッシュ化する処理を実装して、fixtureファイルでのpassword_digest指定に使用するようにします。
 
-ハッシュ化はBCrypt::Passwordのcreateメソッドで作成します。
-ハッシュ化のコストの決め方はsecure_passwordを参照。
+ハッシュ化はBCrypt::Passwordのcreateメソッドで作成します。 +
+ハッシュ化のコストの決め方はsecure_passwordの実装を参考にします。 +
+link:https://github.com/rails/rails/blob/b965ce361b89ad33a4a4b422f8e564233926c723/activemodel/lib/active_model/secure_password.rb[secure_password.ruby] +
+以下のように実装してください。
 
-link:https://github.com/rails/rails/blob/b965ce361b89ad33a4a4b422f8e564233926c723/activemodel/lib/active_model/secure_password.rb[secure_password.rb]
-
-[source, rb]
+[source, ruby]
 .app/models/user.rb
 ----
 class User < ApplicationRecord
@@ -136,8 +132,9 @@ class User < ApplicationRecord
 end
 ----
 
-そして、実装したdigest関数を使用してfixtureファイルへハッシュ化した値を指定するようにします。
-fixtureファイルからのRailsアプリの関数呼び出しはView（erbファイル）と同様です。
+実装したdigest関数を使用してfixtureファイルへハッシュ化した値を指定するようにします。 +
+fixtureファイルからの関数呼び出しはView（erbファイル）と同様に `<%= ... %>` タグで行います。 +
+以下のように編集してください。
 
 [source, yml]
 .test/fixtures/users.yml
@@ -148,17 +145,34 @@ akihiro:
   password_digest: <%= User.digest('password') %>
 ----
 
-テストデータにハッシュ化した値を入れることができました。
+これで、テストデータにハッシュ化した値を入れることができました。
 
 [suppress='Contraction InvalidSymbol']
-テストコードで `users(:akihiro)` とすることでfixtureで保存したakihiroのUserモデルを取得出来ます。
+上記のfixtureのデータをテストコードで使用する場合、テーブル名と最上位のラベル名を使用して `users(:akihiro)` のようにすることで対応するModelとして取得できます。 +
 では、テストを実装しましょう。
 
-[source, rb]
+ユーザ情報画面が表示されたかどうかを確認します。どの画面かは使用されたViewで判断します。 +
+どのView(テンプレート)を使って画面が作成されたかを確認するにはassert_templateメソッドを使用します。
+ただし、assert_templateメソッドが実装されたrails-controller-testingというgemがRoR5.0以降では外されています。 +
+'Gemfile' を編集して、rails-controller-testingを追加しましょう。 +
+以下のように編集してください。
+
+[source, ruby]
+.Gemfile
+----
+gem 'rails-controller-testing', '~> 1.0', '>= 1.0.2'
+----
+
+次に改めてテストの実装です。
+以下のよう実装してください。
+
+[source, ruby]
+.test/controllers/users_controller_test.rb
 ----
 class UsersControllerTest < ActionDispatch::IntegrationTest
   def setup
-    @user       = users(:akihiro) # <1>
+    # <1>
+    @user       = users(:akihiro)
   end
 
   test 'should show user' do
@@ -168,12 +182,9 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 end
 ----
+
 <1> fixtureで用意したテストデータを取得
+
 <2> テストデータのユーザを表示
 
-テストを実行して、想定通りの動作になっていることを確認します。
-
-[source, console]
-----
-$ rails test
-----
+テストを実行すると、想定通りの動作になっていることを確認できます。

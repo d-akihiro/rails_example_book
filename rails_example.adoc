@@ -10,19 +10,20 @@
 :toclevels: 2
 :pagenums:
 :sectnums:
+:source-highlighter: coderay
 
 include::book/01_environment_build/environment_build.adoc[]
 
-// include::book/02_about_rails/about_rails.adoc[]
+include::book/02_about_rails/about_rails.adoc[]
 
-// include::book/03_start_project/start_project.adoc[]
+include::book/03_start_project/start_project.adoc[]
 
-// include::book/04_create_home_page/create_static_pages.adoc[]
+include::book/04_create_home_page/create_static_pages.adoc[]
 
-// include::book/05_create_user_model/create_user_model.adoc[]
+include::book/05_create_user_model/create_user_model.adoc[]
 
-// include::book/06_create_user_controller/create_user_controller.adoc[]
+include::book/06_create_user_controller/create_user_controller.adoc[]
 
-// include::book/07_create_authentification/create_authentification.adoc[]
+include::book/07_create_authentification/create_authentification.adoc[]
 
-// include::book/ex_rails_command/rails_command.adoc[]
+include::book/ex_rails_command/rails_command.adoc[]

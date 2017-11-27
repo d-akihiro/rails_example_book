@@ -1,0 +1,32 @@
+=== ログアウト
+ログイン処理を行うlog_outメソッドを実装します。
+ログアウト処理ではセッションに格納したユーザIDを削除します。 +
+セッションのデータを削除するには**delete**メソッドを使用します。 +
+以下のように実装してください。
+
+[source, ruby]
+.app/helpers/sessions_helper.rb
+----
+module SessionsHelper
+  def log_out
+    session.delete(:user_id)
+  end
+end
+----
+
+次にSessionsControllerのdestoroyアクションで実装したlog_outメソッドを呼ぶようにしましょう。 +
+ログアウト後はルートパスへリダイレクトするようにします。 +
+以下のように実装してください。
+
+[source, ruby]
+.app/controllers/sessions_controller.rb
+----
+class SessionsController < ApplicationController
+  def destroy
+    log_out
+    redirect_to root_path
+  end
+end
+----
+
+ではlog outボタンを押してみましょう…と行きたいところですが、log outボタンはまだありません。

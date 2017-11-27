@@ -63,7 +63,7 @@ $ sudo pkgutil --forget com.vagrant.vagrant
 ----
 
 詳しくは公式ページ参照: +
-https://www.vagrantup.com/docs/installation/uninstallation.html[https://www.vagrantup.com/docs/installation/uninstallation.html]
+https://www.vagrantup.com/docs/installation/uninstallation.html[https://www.vagrantup.com/docs/installation/uninstallation.eruby]
 
 ****
 

@@ -1,0 +1,85 @@
+=== ログイン中の確認
+
+ユーザ情報画面をログイン中でなくては表示出来ないようにして見ましょう。 +
+もしログイン中ではないのに表示しようとした場合は、ログイン画面へ誘導します。
+
+==== 実装
+
+Controllerで**before_action**メソッドを使用すると、アクションの実行前に行う処理を設定することが出来ます。 +
+ユーザ情報画面表示(showアクション)前に行うlogged_in_userメソッドを実装します。 +
+logged_in_userメソッドではヘッダの表示切り替え時と同様にlogged_in?メソッドでログイン状態を確認し、ログイン中でなければフラッシュメッセージでログインするようにアナウンスします。 +
+そして、ログイン画面へリダイレクトさせます。 +
+ログイン中ならlogged_in_userメソッドでは特になにもしません。 +
+以下のように実装してください。
+
+[source, ruby]
+.app/controllers/users_controller.rb
+----
+class UsersController < ApplicationController
+  # <1>
+  before_action :logged_in_user, only: [:show]
+
+  private
+  # <2>
+  def logged_in_user
+    unless logged_in?
+      flash[:danger] = 'Please log in.'
+      redirect_to login_url
+    end
+  end
+end
+----
+
+<1> showアクション前にlogged_in_userを実行する
+<2> logged_in_userを追加した。ログイン中でなければ、ログイン画面へリダイレクトする。フラッシュメッセージを表示する。
+
+ログアウトした状態で、
+link:http://localhost:3000/users/1[http://localhost:3000/users/1]
+などを開いてみましょう。 +
+ログイン画面にリダイレクトされます。
+
+.未ログイン中によるログイン画面へのリダイレクト
+image::images/permission_login.png[未ログイン中によるログイン画面へのリダイレクト]
+
+==== テスト
+
+テストを実装します。 +
+今回は単一の動作ですし、単体テストで良いですね。
+
+まずは、以前実装したユーザ情報画面を表示する単体テストへログイン処理を追加します。 +
+次に、ログインしていない状態でユーザ情報画面を表示した場合、フラッシュメッセージが存在し、かつログイン画面へリダイレクトされることを確認します。 +
+以下のように実装してください。
+
+[source, ruby]
+.test/controllers/users_controller_test.rb
+----
+class UsersControllerTest < ActionDispatch::IntegrationTest
+  def setup
+    @user       = users(:akihiro)
+  end
+
+  test 'should show user when logged in' do
+    # <1>
+    post login_path, params: { session: { email: @user.email,
+                                          password: 'password' }}
+    get user_path(@user)
+    assert_template 'users/show'
+
+    # <2>
+    assert flash.empty?
+  end
+
+  # <3>
+  test 'should redirect user when not logged in' do
+    get user_path(@user)
+    assert_not flash.empty?
+    assert_redirected_to login_url
+  end
+end
+----
+
+<1> ユーザ情報画面の表示テストへログイン処理を追加
+
+<2> フラッシュメッセージがないことも確認する
+
+<3> ログインせずにユーザ情報画面を表示した場合、フラッシュメッセージが存在し、かつログイン画面へリダイレクトされることを確認する。

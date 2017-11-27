@@ -1,0 +1,107 @@
+[suppress='InvalidSymbol']
+=== 空欄（empty）バリデーション
+
+ユーザの名前とメールアドレスは必ず登録する仕様とします。
+
+==== テスト
+
+空欄バリデーションのテストコードを実装します。 +
+まず、オーバーライドしたsetupメソッドで各テスト実行前の処理を実装できるので、
+setupメソッドで各テストで使用する正常なユーザ情報を用意します。
+
+次にバリデーションOK、 名前空欄によるNG時、メールアドレス空欄によるNG時の3パターンのテストを実装します。
+バリデーション結果はvalid?メソッドを使用して `@user.valid?` のように確認することができます。 +
+その結果をassertメソッドまたはassert_notメソッドでチェックします。 +
+以下のように実装してください。
+
+[source, ruby]
+.test/models/user_test.rb
+----
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  # test "the truth" do
+  #   assert true
+  # end
+  def setup
+    # <1>
+    @user = User.new(name: 'Example User', email: 'user@example.com')
+  end
+
+  # <2>
+  test 'should be valid' do
+    assert @user.valid?
+  end
+
+  # <3>
+  test 'name should be present' do
+    @user.name = '   '
+    assert_not @user.valid?
+  end
+
+  # <4>
+  test 'email should be present' do
+    @user.email = '   '
+    assert_not @user.valid?
+  end
+end
+----
+
+<1> テストで使用する正常なユーザ情報です。
+
+<2> バリデーションOKとなるケースです。
+
+<3> ユーザの名前が空欄のためバリデーションNGとなるケースです。
+
+<4> ユーザのメールアドレスが空欄のためバリデーションNGとなるケースです。
+
+テストを実行すると空欄のバリデーションが実装されていないので、3と4の `@user.valid?` の結果がOKとなってしまい、テスト失敗となります。 +
+このテストを成功させるように、空欄のためのバリデーションを実装します。
+
+==== 実装
+
+ActiveRecordにはバリデーションを設定する**validates**メソッドが用意されています。これを使って各バリデーションを実装して行きます。 +
+validatesメソッドには空欄バリデーション設定のための**presence**オプションが用意されているので、これを使用して空欄のバリデーションを実装します。
+
+[source, ruby]
+./app/models/user.rb
+----
+class User < ApplicationRecord
+  validates :name, presence:true
+  validates :email, presence:true
+end
+----
+
+実際にバリデーションが動作することを確認してみましょう。 +
+`rails console` コマンドでirbを起動すると、RoRに実装したクラスをirbインタプリタで使用することができます。 +
+これを使ってUserのインスタンスを作成し、valid?メソッドの結果を確認しましょう。
+
+[source, console]
+.空欄バリデーションの確認
+----
+<1>
+$ rails console
+
+<2>
+irb> user = User.new(name: 'Example User', email: 'user@example.com')
+irb> user.valid?
+
+<3>
+irb> user = User.new(name: '   ', email: 'user@example.com')
+irb> user.valid?
+
+<4>
+irb> user = User.new(name: 'Example User', email: '   ')
+irb> user.valid?
+----
+
+<1> irb起動
+
+<2> バリデーションOKを確認
+
+<3> 名前空欄時のバリデーションNGを確認
+
+<4> メールアドレス空欄時のバリデーションNGを確認
+
+空欄のバリデーションが想定通り動作していることが確認できました。 +
+テストを実行すると、先ほど実装したテストが成功するようになっています。

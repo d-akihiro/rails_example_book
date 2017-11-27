@@ -1,0 +1,166 @@
+=== ログイン画面
+
+ログイン画面を作成します。
+
+==== View
+
+Viewを実装します。
+メールアドレス（ユーザ名）とパスワードの入力項目を持つフォームとします。 +
+編集内容がモデルと対応しないので、フォームのsubmit時に呼び出すパスを明示的に指定します。 +
+ユーザ登録していない場合は、ユーザ登録を先に行う必要があるので、ユーザ登録画面へのリンクも設置します。
+
+[source, eruby]
+.app/views/sessions/new.html.erb
+----
+<% provide(:title, "Log in") %>
+<h1>Log in</h1>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    # <1>
+    <%= form_for(:session, url: login_path) do |f| %>
+
+      <%= f.label :email %>
+      <%= f.email_field :email, class: 'form-control' %>
+
+      <%= f.label :password %>
+      <%= f.password_field :password, class: 'form-control' %>
+
+      <%= f.submit "Log in", class: "btn btn-primary" %>
+    <% end %>
+
+    <p>New user? <%= link_to "Sign up now!", new_user_path %></p>
+  </div>
+</div>
+----
+
+<1> form_forのurlオプションで呼び出すパスを指定している。HTTPメソッドはデフォルトではPOSTとなる。フォームの入力内容は:sessionラベルに格納される。
+
+.ログイン画面
+image::images/login.png[ログイン画面]
+
+==== アクション（create）
+
+login_pathのPOSTリクエストに紐づけられたアクションはcreateです。
+createアクションを実装しましょう。
+
+今回のフォームはModelに対応していないので、アクションで取得する場合は `params[:session][:email]` のように項目ごとに取得する形になります。
+ちなみに、今回はModelへ入力項目を流すわけではないためpermitによる許可は必要ありません。
+
+認証するユーザはメールアドレス(:email)で検索します。 +
+検索する際にメールアドレスは保存時に小文字に変換していることに注意してください。つまり、大文字でメールアドレスが入力されても小文字へ変換してから検索に使用する必要があります。
+
+認証にはauthenticateメソッドを使用します。
+
+認証に成功した場合はログイン処理を行なった上でユーザ表示画面へリダイレクトします。
+ログイン処理はまだ未実装なので、TODOとしておきます。
+
+フォームから受け取ったメールアドレスとパスワードを使って認証を行います。
+認証に失敗した場合はログイン画面を再度表示します。 +
+それから、認証失敗したことをユーザに示すためにフラッシュメッセージも表示しましょう。
+
+今回のフラッシュメッセージは画面遷移ではなくrendarメソッドによる再表示後の表示になります。 +
+画面遷移をしないため、前回と同じようにflash変数へメッセージを格納すると、画面再表示(画面遷移ではない)した後、flash変数へ格納したメッセージがクリアされません。 +
+そのため、以降の操作で他の画面に遷移後もフラッシュメッセージが表示されたままになってしまいます。 +
+これを防ぐには `flash.now[<ラベル>]=<メッセージ>` のようにメッセージを格納するようにします。
+こうすると、画面表示を伴わない再表示時にもメッセージが消えるようになります。 +
+以下のように実装してください。
+
+[source, ruby]
+.app/controllers/sessions_controller.rb
+----
+class SessionsController < ApplicationController
+  def new
+  end
+
+  def create
+    # <1>
+    user = User.find_by(email: params[:session][:email].downcase)
+    if user && user.authenticate(params[:session][:password])
+      # <2>
+      # TODO: ログイン処理
+      redirect_to user
+    else
+      # <3>
+      flash.now[:danger] = 'Invalid email/password combination'
+      render 'new'
+    end
+  end
+
+  # <4>
+  def destroy
+  end
+end
+----
+
+<1> メールアドレスでユーザを検索し、パスワードで認証を試す
+
+<2> 認証に成功した場合、ログイン処理を行い、ユーザ表示画面へリダイレクトする。（ログイン処理未実装）
+
+<3> 認証に失敗した場合、ログイン画面を表示する。フラッシュメッセージを表示する。
+
+<4> まだ使いませんが、ログアウト処理のdestoryアクションを宣言だけしておく。
+
+.ログイン失敗
+image::images/login_invalid.png[ログイン失敗]
+
+
+==== テスト
+ログイン失敗時のテストを実装します。
+今回も統合テストとして実装します。
+
+テストで確認するのは以下の3点です。
+
+* ログイン失敗時はログイン画面を再表示すること
+* ログイン失敗時にフラッシュメッセージを表示する
+* 他の画面へ遷移した時にフラッシュメッセージが消える
+
+まずはログインの統合テストを生成します。
+
+[source, console]
+.ログインの統合テスト生成
+----
+$ rails generate integration_test users_login
+----
+
+ログイン失敗のテストを実装します。 +
+以下のように実装してください。
+
+[source, ruby]
+.test/integration/users_login_test.rb
+----
+require 'test_helper'
+
+class UsersLoginTest < ActionDispatch::IntegrationTest
+  def setup
+    @user = users(:akihiro)
+  end
+
+  test "login with invalid information" do
+    # <1>
+    get login_path
+    assert_template 'sessions/new'
+
+    # <3>
+    post login_path, params: { session: { email: "", password: "" } }
+    assert_template 'sessions/new'
+
+    # <4>
+    assert_not flash.empty?
+    assert_select 'div.alert-danger'
+
+    # <5>
+    get root_path
+    assert flash.empty?
+    assert_select 'div.alert-danger', 0
+  end
+end
+----
+
+<1> ログイン画面を表示する
+
+<2> ログイン失敗するとログイン画面が表示される。
+
+<3> ログイン失敗するとフラッシュメッセージが表示される。
+
+<4> ログイン失敗後、他の画面に遷移すると、フラッシュメッセージが消える。

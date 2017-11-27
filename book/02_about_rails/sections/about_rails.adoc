@@ -17,9 +17,17 @@ scaffoldというジェネレータを使用するとコマンド実行するだ
 
 RailsはWeb型のMVCモデルアーキテクチャパターンを採用しています。
 
+MVCアーキテクチャとはアプリケーションをModel、View、Controllerの3つの役割で分割して構成するアーキテクチャです。
+Modelはビジネスロジックに従ってアプリケーションの状態を加工し、加工した状態をViewで定義した表現でユーザへ表示します。
+そしてユーザはControllerを通してアプリケーションを操作します。
+
+.MVCアーキテクチャ概念
+image::images/true_mvc.png[MVCアーキテクチャ概念]
+
+Ruby on RailsでのMVCアーキテクチャは次のようになります。
+
 .MVCアーキテクチャ
 image::images/mvc.png[MVCアーキテクチャ]
 
 Web型のMVCではブラウザから送られてくるリクエストをControllerが受け取り、必要に応じてModelと対話してDBの更新・取得を行います。
 そして、取得した情報をViewへ与えてHTMLを描画します。
-もちろんRestful APIも実装可能です。

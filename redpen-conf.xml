@@ -23,5 +23,7 @@
 	<symbols>
 		<!-- .はファイル名に使用する。使用箇所が多いので禁止文字から外す。 -->
 		<symbol name="FULL_STOP" value="。" before-space="false" after-space="false" invalid-chars="．"/>
+
+		<symbol name="TILDE" value="〜" before-space="false" after-space="false" />
 	</symbols>
 </redpen-conf>

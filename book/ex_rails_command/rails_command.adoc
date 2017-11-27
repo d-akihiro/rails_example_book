@@ -18,6 +18,8 @@ include::sections/rails_server.adoc[]
 
 include::sections/rails_console.adoc[]
 
+include::sections/rails_dbconsole.adoc[]
+
 === Rake
 
 Rakeタスクです。

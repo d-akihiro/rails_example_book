@@ -1,0 +1,54 @@
+=== DBの一意性
+
+メールアドレスの一意性のバリデーションを実装しましたが、これはあくまでもRailsのModelとしての一意性です。
+他システムなどからDBへアクセスされた場合、この一意性を保つことはできません。 +
+できるなら、DB側でも一意性を保つようにしてやるべきです。 +
+DBのメールアドレスカラムへユニーク属性を付けたインデックスを追加することで、一意性を保つようにします。
+
+DB定義の操作はマイグレーションで行います。
+一意性をDB定義に追加するためのマイグレーションファイルを作成しましょう。 +
+まずは雛形のマイグレーションファイルを生成します。
+
+[source, console]
+.一意性インデックス追加用のマイグレーションファイル生成
+----
+$ rails generate migration add_index_to_users_email
+Running via Spring preloader in process 16799
+      invoke  active_record
+      create    db/migrate/20170910090234_add_index_to_users_email.rb
+----
+
+次にマイグレーションファイルへ**add_index**メソッドを使ってインデックスを追加する処理を追加します。 +
+add_indexメソッドの**unique**オプションを指定することで、追加するインデックスへユニーク属性を付与できます。
+
+[source, ruby]
+.一意性インデックス追加用のマイグレーションファイル
+----
+class AddIndexToUsersEmail < ActiveRecord::Migration[5.1]
+  def change
+    add_index :users, :email, unique: true
+  end
+end
+----
+
+マイグレーションファイルができたらマイグレーションを実行します。
+
+[source, console]
+.一意性インデックス追加のマイグレーション実行
+----
+$ rails db:migrate
+== 20170910090234 AddIndexToUsersEmail: migrating =============================
+-- add_index(:users, :email, {:unique=>true})
+   -> 0.0099s
+== 20170910090234 AddIndexToUsersEmail: migrated (0.0101s) ====================
+----
+
+これで、DB側でもメールアドレスの一意性が保たれるようになりました。 +
+`rails dbconsole` コマンドでsqlite3クライアントを開きスキーマを確認すると、emailにUNIQUEインデックスが追加されているのが判ります。
+
+[source, console]
+.DB定義の確認
+----
+$ rails dbconsole
+sqlite> .schema users
+----

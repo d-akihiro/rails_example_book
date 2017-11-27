@@ -1,14 +1,12 @@
 === 共通ビュー
 
-Webブラウザに表示されたホーム画面を注意深く見てます。
+Webブラウザに表示されたホーム画面のソースを注意深く見てみると、Viewにはなかったtitle要素などを持つheader要素が付いているのに気がつくと思います。
+これはどこからきたのでしょうか？
 
 .ホーム画面のソース
 image::images/static_pages_home_source.png[ホーム画面のソース]
 
-homeのビューに無かったヘッダなどが付いています。
-これは何処から来たのでしょうか？
-
-ファイルを検索してみましょう。
+とりあえず、アプリのファイル全体を検索してみると、'views/layouts/application.html.erb' にtitle要素が実装されていることが判りました。
 
 [source, console]
 .タイトルの検索
@@ -17,11 +15,9 @@ $ find ./* | xargs grep -dskip "<title>RailsExample</title>"
 ./app/views/layouts/application.html.erb:    <title>RailsExample</title>
 ----
 
-`views/layouts/application.html.erb` に実装されていることが判りました。
+この 'application.html.erb' とはアプリケーション全体で使用されるビューです。
 
-この `application.html.erb` はアプリケーション全体で使用されるビューです。
-
-[source, html]
+[source, eruby]
 .views/layouts/application.html.erb
 ----
 <!DOCTYPE html>
@@ -35,29 +31,41 @@ $ find ./* | xargs grep -dskip "<title>RailsExample</title>"
   </head>
 
   <body>
-    <%= yield %> /* <1> */
+    # <1>
+    <%= yield %>
   </body>
 </html>
 ----
 
 <1> アクションのビュー埋め込み箇所
 
-このビューの中に出てくる `<%= ... %>` というタグは、このタグ内に記載したRubyの処理結果を、このタグの位置に埋め込みます。
-
-bodyタグの中の `<%= yield %>` はyieldメソッドを呼び出しています。
-yieldメソッドとは呼び出し元から渡されたブロック（無名関数）を呼び出すメソッドです。
-
-ここの引数なしで呼び出したyieldメソッドは、対象のアクションのビューを出力します。
-
+このビューの中に出てくる `<%= ... %>` というタグは、このタグ内に記載したRubyの処理結果を、このタグの位置に埋め込みます。 +
+ここで使われているyieldメソッドとは無名関数を呼び出すメソッドで、呼び出し元に渡された処理を実行します。 +
+ここでのyieldメソッドは引数無しの場合、呼び出されたアクションのビューを出力します。 +
 つまり、bodyタグ内にアクションのビューが埋め込まれ、Webブラウザで見たようなHTMLが作成されるのです。
 
+.yieldによるViewの埋め込み
+image::images/yield.png[yieldによるViewの埋め込み]
+
 [suppress='InvalidSymbol']
-==== タイトル切り替え
+=== タイトル切り替え
 
-動的な表示の実装の練習としてタイトルをページに合わせて切り替えるようにしてみましょう。
-自動生成済みのhomeアクションのテストにタイトル要素が"Home | Ruby on Rails Example"となっていることを確認するコードを追加します。
+View内のyieldメソッドは引数にラベルを与えるとラベルに関連づけられた値を取得します。 + これを使うことで、共通のViewの内容を各画面のViewが制御することができます。
 
-[source, rb]
+.引数付きyieldによる値の埋め込み
+image::images/yield_title.png[引数付きyieldによる値の埋め込み]
+
+簡単な例として、title要素を各画面毎に切り替えるようにしてみましょう。
+今のtitle要素の文字列は"RailsExample"となっていますが、これを"<各画面名など> | Ruby on Rails Example"のようになるようにします。
+
+==== テスト
+
+テストを先に実装します。 +
+自動生成されたhomeアクションのテストへ、title要素の文字列を確認する処理を追加します。
+title要素の文字列が"Home | Ruby on Rails Example"となって入ればOKとします。 +
+getメソッドで取得したhtml内の要素を確認するにはassert_selectメソッドを使用します。 `assert_select <要素指定>, <チェックする値>` のように使用します。
+
+[source, ruby]
 .test/controllers/static_pages_controller_test.rb
 ----
 require 'test_helper'
@@ -74,24 +82,14 @@ end
 ----
 <1> 追加したテストコード
 
-追加したテストコードのassert_selectメソッドは指定した要素の内容を確認することができます。
-title要素の文字列が"Home | Ruby on Rails Example"かどうかをチェックしています。
+テストを実行すると、当然ですが追加した箇所でNGが出ます。これをNGが出ないように実装していくのです。
 
-テストを実行すると当然失敗します。
+==== 実装
 
-[source, console]
-.テスト実行
-----
-$ rails test
-<省略>
-1 runs, 2 assertions, 1 failures, 0 errors, 0 skips
-----
+'application.html.erb' のtitle要素へ文字列を埋め込めるように修正します。
+yieldメソッドを使って `:title` ラベルに関連づけられた値を取得して埋め込みます。
 
-===== 共通ビューの対応
-
-`application.html.erb` のタイトル要素へ文字列を埋め込めるように修正します。
-
-[source, rb]
+[source, eruby]
 .views/layouts/application.html.erb
 ----
 <!DOCTYPE html>
@@ -99,66 +97,29 @@ $ rails test
   <head>
 
     <title><%= yield(:title) %> | Ruby on Rails Example</title> # <1>
-
-    <%= csrf_meta_tags %>
-
-    <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
-    <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
-  </head>
-
-  <body>
-    <%= yield %>
-  </body>
-</html>
 ----
 <1> 変更箇所
 
-"Home"の部分だけ:titleラベルで置き換えられるようにしました。
-他のページを表示するとき、この部分にそのページの名前を入れます。
+次に、各画面で `:title` ラベルへ文字列を関連づけます。
+ラベルへの値の関連づけにはprovideメソッドを使用します。
+`provide(<ラベル>, <値>)` のように使用します。 +
+今はhome画面しかありませんが、各画面のViewでこれを行うようにします。
+home画面では"Home"を `:title` ラベルへ関連づけます。
 
-yieldメソッドは引数にラベルを指定した場合、指定したラベルに関連づけられた値を出力します。
-ラベルへの値の関連づけはprovideメソッドで行います。
+注意すべき点として、先ほどからView内でRubyの処理呼び出しには `<%= ... %>` を使用していましたが、今回これで使用するとprovideメソッドの戻り値が画面に埋め込まれてしまいます。 +
+そこで、今回は `<% ... %>` という似たタグを使用します。これは`<%= ... %>` と同様に中に書かれたRuby処理を呼び出しますが、その結果を画面内には埋め込みません。
 
-ここでは:titleラベルに関連づけられた値をタイトルの文字列中に埋め込んでいます。
-:titleラベルにページ名を関連づけるのは各画面のビューで行います。
-
-homeアクションのビューに:titleラベルへページ名を関連づける処理を追加します。
-
-[source, html]
+[source, eruby]
 .app/views/static_pages/home.html.erb
 ----
-<% provide(:title,"Home") %> <!-- 1 -->
-
-<div>
-  <h1>Home Page</h1>
-  <h2>Welcome to my Home Page</h2>
-  <a href="#">Sign up now!</a>
-</div>
-
+<% provide(:title,"Home") %> # <1>
 ----
+
 <1> 追加した処理
 
-上記に出てくる `<% ... %>` タグは中に記載したRubyの処理を実行します。
-`<%= ... %>` とは異なり処理結果を埋め込みません。
-
-`<% ... %>` タグ内でprovideメソッドを呼び出しています。
-provideメソッドはラベルと値を関連づけます。
-ここでは:titleラベルに"Home"を関連づけています。
-
-WebブラウザでHome画面を読み込み直して見てください。
-title要素が期待通り変更されています。
+実装が終わりました。WebブラウザでHome画面を見てみましょう。
+title要素の文字列が期待通り"Home | Ruby on Rails Example"に変更されています。 +
+また、テストを実行してみると、先ほど実装したテストが成功するようになっています。
 
 .ホーム画面のソース（変更後）
 image::images/static_pages_home_source_mod.png[ホーム画面のソース（変更後）]
-
-テスト実行してみましょう。
-
-[source, console]
-.テスト実行
-----
-$ rails test
-<省略>
-1 runs, 2 assertions, 0 failures, 0 errors, 0 skips
-----
-
-先ほど失敗していたテストが成功するようになりました。

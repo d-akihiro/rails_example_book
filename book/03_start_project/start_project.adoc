@@ -1,4 +1,4 @@
-== プロジェクトの開始
+== アプリ新規作成
 
 include::sections/boot_vm_machine.adoc[]
 

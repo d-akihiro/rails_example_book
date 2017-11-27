@@ -1,0 +1,19 @@
+==== データベースコマンドラインツール起動（rails dbconsole）
+
+データベースコマンドラインツールを起動する。
+
+[source, console]
+.使い方
+----
+$ rails dbconsole
+----
+
+[options="header"]
+.sqlite3クライアント
+|====
+| コマンド | 説明
+| .table | テーブル一覧表示
+| .schema <テーブル名> | スキーマ表示
+| SELECT * FROM <テーブル名>; | テーブルの内容表示
+| .quit | 終了
+|====

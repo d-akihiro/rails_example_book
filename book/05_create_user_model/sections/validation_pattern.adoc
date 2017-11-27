@@ -1,0 +1,130 @@
+[suppress='InvalidSymbol']
+=== パターン（pattern）バリデーション
+
+文字列のパターンで判定するバリデーションを実装します。 +
+メールアドレスの形式は'ローカル部@ドメイン'の形式ですが、もう少し細かくみていくと次のような規則を持っています。
+
+* ローカル部で使えるのは英数字 アンダースコア （_） プラス （+） ハイフン （-） ドット （.） のいずれかを少なくとも1文字以上繰り返す
+
+* ローカル部とドメインの間にアットマーク（@）
+
+* ドメイン部で使えるのは英数字 ハイフン （-） ドット （.）
+
+* ドメイン部の先頭は英数字 アンダースコア （_）
+
+* ドメイン部のドットは2回以上繰り返さない
+
+* トップレベルドメインはドット （.） に続く英字の繰り返しとする。また、必ず存在する。
+
+実際のメールアドレスはもっと複雑ですが、ここではこの規則でチェックします。
+
+==== テスト
+
+まずはメールアドレスの各規則がNGとなるパターンのテストを実装します。 +
+`<リスト>.each do |<リスト要素>| <処理> end` とするとリストの各要素に対して処理を行うことができます。これを使って多くのNGパターンのメールアドレスを一つずつvalid?メソッドで確認して行きます。バリデーションがOKだとダメなケースなのでassert_notメソッドでチェックします。
+
+それから、どのメールアドレスでNGとなったかが判るようにするために、 assert_notメソッドでNG時に出力するメッセージを指定します。
+`assert_not <チェック内容>, <メッセージ>` のようにすることで、NG時のメッセージを指定できます。
+
+[source, ruby]
+.test/models/user_test.rb
+----
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  test 'email validation should reject invalid addresses' do
+    invalid_addresses = %w[user,@example.com # <1>
+                           user_at_example.com # <2>
+                           user@example,foo.com # <3>
+                           user@.example.com # <4>
+                           user@example..com # <5>
+                           user@example.123 # <6>
+                           user@example] # <7>
+    invalid_addresses.each do |invalid_address|
+      @user.email = invalid_address
+      assert_not @user.valid?, "#{invalid_address.inspect} should be invalid"
+    end
+  end
+end
+----
+
+<1> ローカル部にカンマ（利用できない文字）を使用
+
+<2> ローカル部とドメイン部の間にアットマークがない
+
+<3> ドメイン部にカンマ（利用できない文字）を使用
+
+<4> ドメイン部の先頭にドットを使用
+
+<5> ドメイン部のドットが繰り返す
+
+<6> トップレベルドメインが数字（使用できない文字）
+
+<7> トップレベルドメインがない
+
+テストを実行すると当然失敗します。 +
+このテストが成功するようにバリデーションを実装します。
+
+==== 実装
+
+validateメソッドには正規表現でチェックするformatオプションが提供されているので、これを使ってメールアドレス形式のチェックを実装します。 +
+正規表現で先ほどの規則を表現すると `\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z` になります。
+
+[options="header"]
+.メールアドレス形式の正規表現
+|====
+| 正規表現 | 内容
+| \A       | 文字列の先頭
+| [\w+\-.]+ | 英数字、アンダースコア(/wは[a-zA-Z_0-9]と同等)、
+プラス(+)、ハイフン (\-)、ドット (.) の
+いずれかを少なくとも1文字以上繰り返す
+| @ | あっとまーく
+| [a-z\d\-]+ | 英字(a-z), 数字(\d), ハイフン(\-)の
+いずれかを少なくとも1文字以上繰り返す
+| (\.[a-z\d\-]+)* |
+ [ドット(/.)]
+ [英字(a-z), 数字(\d), ハイフン(\-)の繰り返し]の形式( '.exmample' など)を0回以上繰り返す
+ (出現しない場合もある)
+| \. | どっと
+| [a-z]+ | 英字を少なくとも1文字以上繰り返す
+| \z | 文字列の最後
+|====
+
+これを実装します。 +
+正規表現はvalidatesメソッドのformatオプションへのハッシュ**with**で指定します。 +
+Rubyでは正規表現を `/<正規表現>/` の形式で表現します。 `/<正規表現>/i` のように最後にiをつけると大文字小文字区別を無視できます。 +
+以下のように実装してください。
+
+[source, ruby]
+./app/models/user.rb
+----
+class User < ApplicationRecord
+    validates :name, presence:true,length:{maximum:50}
+
+    VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i # <1>
+    validates :email, presence:true,length:{maximum:255}, format: {with:VALID_EMAIL_REGEX} # <2>
+end
+----
+<1> 正規表現
+
+<2> formatオプションを指定
+
+早速動作確認してみましょう。
+
+[source, console]
+.パターンバリデーションの確認
+----
+<1>
+$ rails console
+
+<2>
+irb> user = User.new(name: 'Example User', email: 'user_at_example.com')
+irb> user.valid?
+----
+
+<1> irb起動
+
+<2> メールアドレスがパターン違反の場合のバリデーションNGを確認
+
+無事にメールアドレス規則のバリデーションが動作することを確認できました。 +
+テストを実行すると、先ほど実装したテストが成功するようになっています。

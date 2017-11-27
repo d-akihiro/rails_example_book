@@ -1,8 +1,20 @@
 == ログイン機能
 
-おおよそほとんどのWebサービスで必須となるログイン機能を実装します。
+おおよそほとんどのWebサービスで必須となるログイン機能を実装します。 +
+実際の開発ではdoorlockerなどのgemを使って実装してしまうと思いますが、あえて今回は自力で実装してみます。
 
-実際の開発ではdoorlockerなどのgemを使って実装してしまうと思いますが、あえて今回は自力で実装します。
+include::sections/session_controller.adoc[]
 
-include::sections/create_log_in.adoc[]
+include::sections/base_log_in.adoc[]
+
+include::sections/log_in.adoc[]
+
+include::sections/log_out.adoc[]
+
+include::sections/status_login.adoc[]
+
 include::sections/page_permission.adoc[]
+
+include::sections/page_permission_login.adoc[]
+
+include::sections/page_permission_user.adoc[]

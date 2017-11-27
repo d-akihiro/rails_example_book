@@ -1,15 +1,17 @@
-=== モデル作成
+=== Model作成
 
-ユーザ情報をDBへ保存するので、モデルを作成します。
+ユーザ情報をDBへ保存するので、Modelを作成します。 +
+RailsでModelというと、一般的にはActiveRecordを継承したクラスを指します。
 
-Railsでモデルというと、一般的にはActiveRecordを継承したクラスを指します。
+.MVCのModelについて
+****
 
-[NOTE]
-.MVCのモデルについて
-====
+.ActiveRecord
+image::images/active_record.png[ActiveRecord]
+
 ActiveRecordはDBテーブルのレコードと一対一の関係を持ち、レコードの内容の取得・新規作成・編集・削除の機能を提供します。
 
-このActiveRecordを継承したクラスをコントローラから使用します。
+このActiveRecordを継承したクラスをControllerから使用します。
 
 ここで、ビジネスロジックをどこに実装するのか悩むことになると思います。
 
@@ -19,9 +21,7 @@ Railsのフレームワークをそのまま使うならControllerとModelのど
 私的にはControllerとModelの間にビジネスロジックを実装するserviceレイヤを設けるのが好みです。
 
 今回はビジネスロジックらしいロジックは必要ないので、Railsフレームワークが提供するController-Modelをそのまま使用します。
-====
-
-==== DB定義とモデル生成
+****
 
 ユーザ情報としてどのような情報が必要か考えて見ます。
 
@@ -44,12 +44,17 @@ emailアドレスでどのユーザか判別します。
 
 ユーザ認証を実装するのでパスワードも必要になってきそうですが、それは後で追加します。
 
-では、このテーブル定義でモデルを作成します。
+では、このテーブル定義でModelを作成して行きましょう。
 
-Railsにはモデルを生成する `rails generate model` というコマンドが用意されています。
+==== 実装
 
+RailsにはModelを生成する `rails generate model` というコマンドが用意されています。 +
+ `rails generate model <Model名> <フィールド1> <フィールド2>`のように使用します。
+ Model名は単数形にするのがルールなので、Model名は**User**とします。 +
 次のようにコマンドを実行してください。
 
+[source, console]
+.Model生成
 ----
 $ rails generate model User name:string email:string
 Running via Spring preloader in process 9446
@@ -61,25 +66,22 @@ Running via Spring preloader in process 9446
       create      test/fixtures/users.yml
 ----
 
-Userモデルを生成しました。
-Railsでのモデルの名前は単数形です。
+UserModelが生成されました。
 
-Userモデルはnameフィールドとemailフィールドを持つように指定しています。
-
-[source, rb]
+[source, ruby]
 .app/models/user.rb
 ----
 class User < ApplicationRecord
 end
 ----
 
-生成したUserモデルの中身は空です。
-フィールドがないことを疑問に思うかもしれませんが、フィールドはモデルに対応するテーブル定義により実行時に生成されます。
+生成したUserModelの中身は空です。
+フィールドについての記述がないことを疑問に思うかもしれませんが、フィールドはModelに対応するテーブル定義により実行時に生成されます。
 
 先ほどのコマンドでマイグレーションファイルも生成されました。
 マイグレーションファイルとはDB定義を操作するファイルです。
 
-[source, rb]
+[source, ruby]
 .db/migrate/20170909094723_create_users.rb
 ----
 class CreateUsers < ActiveRecord::Migration[5.1]
@@ -94,19 +96,22 @@ class CreateUsers < ActiveRecord::Migration[5.1]
 end
 ----
 
-マイグレーションファイルの中身は単純なRubyコードです。
-
-マイグレーション実行時に、未実行のマイグレーションファイルが実行されテーブル作成や変更、インデックス追加などを行います。
-
-マイグレーションを実行して見ましょう。
-
+マイグレーションファイルの中身は単純なRubyコードです。 +
+上記の場合、 `create_table :users` でusersという名前のテーブルを作成します。 そして、`t.string :name` でstring型のnameフィールド、 `t.string :email` でstring型のemailフィールドが追加されます。 +
+`t.timestamps` はレコードの作成日時を表すcreate_atとレコードの更新日時を表すupdate_atを追加します。(これらは生成時に自動的にマイグレーションファイルに追加されています。) +
+このマイグレーションファイルを実行することで、実際にDB定義を変更するのです。
+マイグレーションを実行して見ましょう。 +
 `rails db:migrate` コマンドでマイグレーションを実行します。
 
+[source, console]
+.マイグレーション実行
 ----
 $ rails db:migrate
 ----
 
 マイグレーションを実行すると次のような列を持つUsersテーブルが作成されます。
+ちなみに、マイグレーションファイルには記載されていなかったidフィールドが存在しますが、これは自動的に追加されたフィールドです。
+
 [options="header"]
 .Usersテーブル
 |============
@@ -118,15 +123,20 @@ $ rails db:migrate
 | update_at | timestamp
 |============
 
-idは自動的に追加された列です。
+sqlite3クライアントからスキーマを確認してみましょう。 +
+`rails dbconsole` でRoRで使用しているDBのクライアントを起動します。ここではsqlite3のクライアント起動されます。 +
+`.schema user` でuserテーブルのスキーマを確認してみましょう。
 
-作成日時（create_at）、更新日時（timestamp）の列はマイグレーションファイルの `t.timestamps` により追加されました。
-
-このテーブルの列がそのままUserモデルのフィールドになります。
+[source, console]
+.スキーマ確認
+----
+$ rails dbconsole
+sqlite> .schema user
+----
 
 [NOTE]
 ====
-ちなみに、マイグレーションを元に戻したい場合は `rails db:rollback` で直前のマイグレーションをロールバック出来る。
+マイグレーションを元に戻したい場合は `rails db:rollback` で直前のマイグレーションをロールバック出来る。
 
 dbを初期化したい場合は `rails db:reset` を行うと良い。
 ====

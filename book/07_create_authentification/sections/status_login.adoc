@@ -1,0 +1,210 @@
+=== ログイン状態による表示切り替え
+
+このままだとなんちゃってログイン機能です。
+ログイン・ログアウト出来てもなにも変わりません。 +
+というか、そもそもlog outボタンがないのでログアウトできません。
+
+ログイン中はlog outボタンを表示するようにしましょう。
+それから、ユーザ情報画面へのリンクもないので追加します。
+
+まずは、ログイン状態をチェックする処理をSessionsHelperへ追加します。 +
+セッションに格納したユーザIDをユーザを取得するcurrent_userメソッドとセッションに格納したユーザIDをユーザが実際に存在するかを確認するlogged_in?メソッドを実装します。 +
+以下のように実装してください。
+
+[source, ruby]
+.app/helpers/sessions_helper.rb
+----
+module SessionsHelper
+  # <1>
+  def current_user
+    User.find_by(id: session[:user_id])
+  end
+
+  #<2>
+  def logged_in?
+    !current_user.nil?
+  end
+end
+----
+
+<1> ログイン中のユーザを取得する
+<2> ログイン中かどうかを取得する
+
+次にViewを変更します。
+ヘッダ部分のlog inボタンをログイン中は表示せず、代わりにAccountボタンを表示します。 +
+Accountボタンはドロップダウンメニューを表示し、ドロップダウンメニュー内にlog outボタンとProfileボタン（ユーザ情報画面へのリンク）を設置します。
+
+一点注意点があります。今回bootstrapの機能でドロップダウンメニューを出す予定なのですが、この機能を使うにはjqueryが必要になります。RoRではデフォルトでjqueryは組み込まれていないので追加する必要があります。 +
+jquery-railsというgemを追加することでjqueryが追加されます。 +
+'Gemfile' を以下のように編集してください。
+
+[source,ruby]
+.Gemfile
+----
+gem 'jquery-rails', '~> 4.3', '>= 4.3.1'
+----
+
+次に、各画面でjqueryが読み込まれるようにする必要があります。
+全画面へ組み込むjavascriptのライブラリは 'app/asserts/javascripts/application.js' に記載することで追加できます。 +
+jqueryとbootstrapのjavascriptライブラリを追加します。 +
+以下のように編集してください。
+
+[source, javascript]
+.app/asserts/javascripts/application.js
+----
+//= require rails-ujs
+//= require jquery <1>
+//= require bootstrap <2>
+//= require turbolinks
+//= require_tree
+----
+
+<1> jqueryを追加
+<2> bootstrapを追加
+
+コメント形式になっていますが、これで全画面に各ライブラリを読み込みます。
+
+では、画面の実装に戻ります。
+'application.html.erb' へログイン中はlog inボタンは表示せず、log outボタンとprofileボタンを持つドロップメニューを表示するようにします。
+ログイン中かどうかの判定には先ほど実装したlogged_in?メソッドを使用します。 +
+Profileボタンでログイン中のユーザのユーザ情報画面へ遷移したいので、先ほど実装したcurrent_userメソッドでログイン中のユーザを取得しリンク先とします。このとき `user_path(current_user)` のように記述するのが普通ですが、 `current_user` と省略表記することが可能です。 +
+log outボタンでdestroyアクションを呼び出します。destroyアクションはDELETEなので普通にリンクへパスを指定しても呼び出せません。 +
+link_toメソッドにはmethodオプションがあり、これで呼び出すHTTPメソッドを指定することができます。methodオプションへDELETEを指定してdestroyアクションを呼ぶようにします。 +
+以下のように実装してください。
+
+[source, eruby]
+.app/views/layouts/application.html.erb
+----
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= yield(:title) %> | Ruby on Rails Example</title>
+    <%= csrf_meta_tags %>
+
+    <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track': 'reload' %>
+    <%= javascript_include_tag 'application', 'data-turbolinks-track': 'reload' %>
+  </head>
+  <body>
+    <header class="navbar navbar-fixed-top navbar-inverse">
+      <div class="container">
+        <%= link_to "Ruby on Rails Example", '#', id: "logo" %>
+        <nav>
+          <ul class="nav navbar-nav navbar-right">
+            <li><%= link_to "Home",   '#' %></li>
+
+            # <1>
+            <% if logged_in? %>
+              # <2>
+              <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                  Account <b class="caret"></b>
+                </a>
+                <ul class="dropdown-menu">
+                  <li><%= link_to "Profile", current_user %></li>
+                  <li><%= link_to "Log out", logout_path, method: :delete %></li>
+                </ul>
+              </li>
+            <% else %>
+              # <3>
+              <li><%= link_to "Log in", login_path %></li>
+            <% end %>
+
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <div class="container">
+      <% flash.each do |message_type, message| %>
+        <div class="alert alert-<%= message_type %>"><%= message %></div>
+      <% end %>
+      <%= yield %>
+    </div>
+  </body>
+</html>
+----
+
+<1> 変更箇所
+
+<2> ログイン中はAccountボタンを表示する。AccountボタンはProfileボタンとLog outボタンを持つドロップダウンメニューを表示する。
+
+<3> ログイン中でなければLog inボタンを表示する
+
+ログインしてみます。
+ログインすると、表示が変わりましたね。これでログアウトもできるようになりました。
+
+.ログイン状態の表示切り替え
+image::images/status_login.png[ログイン状態の表示切り替え]
+
+==== テスト
+
+では、テストを実装しましょう。
+先に実装したログイン成功時のテストへチェック内容を追加します。 +
+追加するチェック内容は以下です。
+
+* ログイン成功後、セッションにユーザIDが格納されている。
+* ログイン成功後、log inボタンはない。log outボタンとProfileボタンがある。
+* ログアウト後、セッションからユーザIDがなくなっている。
+* ログアウト後、log inボタンがある。log outボタンとProfileボタンはない。
+
+テスト処理でログイン中かどうか(セッションにユーザIDがあるかどうか)をなんども書くのが面倒なので、 'test_helper.rb' へログイン状態を判定するis_logged_inメソッドを追加を実装します。 +
+以下のように実装してください。 +
+テストで使用する共通処理はここにまとめて実装します。
+
+[source, ruby]
+.test/integration/users_login_test.rb
+----
+require File.expand_path('../../config/environment', __FILE__)
+require 'rails/test_help'
+
+class ActiveSupport::TestCase
+  # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
+  fixtures :all
+
+  # <1>
+  def is_logged_in?
+    !session[:user_id].nil?
+  end
+end
+----
+
+<1> ログイン状態を判定するis_logged_inメソッドを追加
+
+あらためて、ログイン成功時のテストを実装します。 +
+以下のように実装してください。
+
+[source, ruby]
+.test/integration/users_login_test.rb
+----
+require 'test_helper'
+
+class UsersLoginTest < ActionDispatch::IntegrationTest
+  test 'login with valid information' do
+    get login_path
+    post login_path, params: { session: { email:    @user.email,
+                                          password: 'password' } }
+
+    assert is_logged_in?
+    assert_redirected_to @user
+    follow_redirect!
+    assert_template 'users/show'
+
+    # <1>
+    assert_select 'a[href=?]', login_path, count: 0
+    assert_select 'a[href=?]', logout_path
+    assert_select "a[href=?]", user_path(@user)
+
+    # <2>
+    delete logout_path
+    assert_not is_logged_in?
+    assert_redirected_to root_url
+    follow_redirect!
+
+    assert_select 'a[href=?]', login_path
+    assert_select 'a[href=?]', logout_path,      count: 0
+    assert_select 'a[href=?]', user_path(@user), count: 0
+  end
+end
+----
+
+<1> ログイン成功後、log inボタンはない。log outボタンとProfileボタンがある。
+<2> ログアウト後、log inボタンがある。log outボタンとProfileボタンはない。

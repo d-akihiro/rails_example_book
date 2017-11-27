@@ -1,0 +1,79 @@
+
+=== 保存前の処理
+
+使用するDBによっては、大文字・小文字を区別する場合があります。
+この場合、DB側でのメールアドレスの一意性を保つことができません。 +
+いろいろな対策方法があるとおもますが、今回はDBに保存するメールアドレスは小文字とする。というシステムとしてのルールを設けることで、この問題を回避します。 +
+そもそも、こういうのは大文字・小文字のどちらかに倒しておくのは定石ですしね。
+
+この対策を行うためにはアプリケーションでのDB保存時にメールアドレスを小文字にdowncaseする必要があります。
+
+==== テスト
+
+まずはテストケースを作成します。 +
+ユーザ保存後、ユーザのメールアドレスが全て小文字になっていることを確認します。 +
+以下のように実装してください。
+
+[source, ruby]
+.test/models/user_test.rb
+----
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  # <1>
+  test "email addresses should be saved as lower-case" do # <2>
+    mixed_case_email = "Foo@ExAMPle.CoM"
+    @user.email = mixed_case_email
+    @user.save
+    assert_equal mixed_case_email.downcase, @user.reload.email
+  end
+end
+----
+
+<1> メールアドレスが保存後、全て小文字になっていることを確認するテストケース
+
+テストを実行すると当然失敗します。 +
+このテストが成功するように、DB保存時のメールアドレスのdowncaseを実装していきます。
+
+==== 実装
+
+ActiveRecordによるDB保存前の処理は**before_save**コールバックで実装します。 +
+before_saveコールバック内で、メールアドレスをdowncaseメソッドを使って全て小文字に変換する処理を実装します。 +
+以下のように実装してください。
+
+[source, ruby]
+./app/models/user.rb
+----
+class User < ApplicationRecord
+  # <1>
+  before_save { self.email = email.downcase }
+end
+----
+
+<1> DB保存前のコールバック処理
+
+これで保存前の処理が実装ができました。
+早速動作確認してみましょう。
+
+[source, console]
+.保存前処理の確認
+----
+<1>
+$ rails console
+
+<2>
+irb> user = User.new(name: 'Example User', email: 'Foo@ExAMPle.CoM')
+irb> user.save
+
+<3>
+irb> user.email
+----
+
+<1> irb起動
+
+<2> ユーザを保存
+
+<3> 保存したユーザのメールアドレスを確認
+
+DB保存前にメールアドレスを全て小文字に変換していることが確認できました。 +
+テストを実行すると、先ほど実装したテストが成功するようになっています。

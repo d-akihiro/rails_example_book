@@ -1,16 +1,19 @@
-=== ホーム画面の雛形作成
+=== 静的画面を作る
 
-まずはホーム画面を作成します。
+==== 実装
 
-ホーム画面に必要なのはControllerとViewです。
-静的なページでDBは不要なのでModelは要りません。
-
-==== Controller作成
-
-railsでコントローラを作成する場合、 `rails generate controller`コマンドを使います。
-また、home画面表示のためのアクションも必要なので合わせて作成します。
+静的な画面のコントローラを作成します。 +
+railsでコントローラを作成する場合、 `rails generate controller`コマンドを使います。 +
+Railsではコントローラ名は複数形かつ単語の頭文字を大文字で表記するのが標準ルールです。 +
+ルールに合わせてコントローラの名前は**StaticPages**とします。 +
+`rails generate controller <アクション1> <アクション2>`のように指定することで、
+コントローラ生成時に画面を表示するためのアクションも追加可能です。 +
+home画面を表示するためのアクションを追加します。
+アクション名は全て小文字で表記するのがルールです。
+home画面を表示するアクションの名前は**home**とします。 +
 
 [source, console]
+.StaticPagesコントローラ生成
 ----
 $ rails generate controller StaticPages home
 Running via Spring preloader in process 16459
@@ -31,17 +34,12 @@ Running via Spring preloader in process 16459
       create      app/assets/stylesheets/static_pages.scss
 ----
 
-コントローラ名を**StaticPages**としています。
-Railsではコントローラ名は複数形かつ単語の頭文字を大文字で表記するのが標準ルールになっています。
-StaticPagesには**home**アクションを追加しています。
-アクション名は全て小文字で表記するルールです。
+ログに表示されたように、いくつかのファイルが生成されました。
+コントローラは 'app/controllers' 以下に生成されます。
+StaticPagesコントローラは 'static_pages_controller.rb' です。 +
+ファイルの命名規則はクラス名をスネークケースした名前になっています。
 
-コントローラ生成時のログに表示されたようにいくつかのファイルが生成されています。
-
-生成されたStaticPagesコントローラは `static_pages_controller.rb` です。
-ファイル名はコントローラ名をスネークケースした名前になります。
-
-[source, rb]
+[source, ruby]
 .app/controllers/static_pages_controller.rb
 ----
 class StaticPagesController < ApplicationController
@@ -50,15 +48,18 @@ class StaticPagesController < ApplicationController
 end
 ----
 
-空のhomeアクションが実装されています。
+生成されたStaticPagesControllerを覗いてみると、空のhomeアクションが実装されています。
+実装は空ですが、Webブラウザがhomeアクションを呼び出すと、アクションに対応するビューを使ってレンダリングしたHTMLを返します。 +
+早速表示してみましょう。アドレスはlink:http://localhost:3000/static_pages/home[http://localhost:3000/static_pages/home]です。
 
-実装は空ですが、Webブラウザがhomeアクションを呼び出すと、アクションに対応するビューを使ってレンダリングしたHTMLを返します。
+.ホーム画面
+image::images/static_pages_home_template.png[ホーム画面]
 
 [NOTE]
 ====
-もし、アクションに対応するテンプレート以外を使いたい場合は、**render**メソッドを使用します。
+もし、アクションに対応するビュー以外のテンプレートを使いたい場合は、**render**メソッドを使用します。
 
-[source, rb]
+[source, ruby]
 .他のテンプレートを使う
 ----
 render :template => "user/show"
@@ -66,7 +67,7 @@ render :template => "user/show"
 
 また、HTMLではない文字列を返すAPIとして実装する場合もrenderメソッドを使用します。
 
-[source, rb]
+[source, ruby]
 .文字列を返す
 ----
 render :text =>"文字列"
@@ -74,45 +75,21 @@ render :text =>"文字列"
 
 ====
 
-StaticPagesコントローラのhomeアクションに対応するビューは `app/views/static_pages/home.html.erb` です。
-'app/views/<コントローラ名>/アクション名.html.erb' がアクションに対応するビューです。
-`rails generate controller` コマンドでアクションを生成すると自動的にアクションに対応するビューが生成されます。
+`rails generate controller` コマンドでアクションを生成すると自動的にアクションに対応するビューが生成されます。 +
+アクションに対応するViewのパスは 'app/views/<コントローラ名>/アクション名.html.erb' となります。 +
+なので、StaticPagesコントローラのhomeアクションに対応するビューは 'app/views/static_pages/home.html.erb' となります。
 
-[source, erb]
+[source, eruby]
 .app/views/static_pages/home.html.erb
 ----
 <h1>StaticPages#home</h1>
 <p>Find me in app/views/static_pages/home.html.erb</p>
 ----
 
+先ほど表示した画面ですね。
+試しに編集して見ましょう。
 
-ルーティング設定は `routes.rb` に記載します。
-`rails generate controller` コマンドでアクションを生成すると自動的に生成したアクションのための
-ルーティング設定が追加されます。
-後で変更するので、その時にもう少し詳しい説明をします。
-
-[source, rb]
-.config/routes.rb
-----
-Rails.application.routes.draw do
-  get 'static_pages/home'
-
-  # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
-end
-----
-
-現状では 'static_pages/home' に生成したhomeアクションが紐づいています。
-
-Webブラウザで
-link:http://localhost:3000/static_pages/home[http://localhost:3000/static_pages/home]
-へアクセスすると、homeアクションのビューが表示されます。
-
-.ホーム画面
-image::images/static_pages_home_template.png[ホーム画面]
-
-編集して見ましょう。
-
-[source, erb]
+[source, eruby]
 .app/views/static_pages/home.html.erb
 ----
 <div>
@@ -122,17 +99,17 @@ image::images/static_pages_home_template.png[ホーム画面]
 </div>
 ----
 
-変更が反映されました。
+表示を確認してみます。 +
+link:http://localhost:3000/static_pages/home[http://localhost:3000/static_pages/home] +
+変更が反映されています。
 
 .ホーム画面編集後
 image::images/static_pages_home.png[ホーム画面編集後]
 
-
-=== ページのテスト
+==== テスト
 
 Railsにはテスト機能が標準搭載されています。
-テストを実行してみましょう。
-
+テストを実行してみましょう。 +
 `rails test` コマンドでテストを実行できます。
 
 ----
@@ -141,12 +118,11 @@ $ rails test
 1 runs, 1 assertions, 0 failures, 0 errors, 0 skips
 ----
 
-テストコードは `test` 以下に配置します。
-generateコマンドでコントローラやモデルを生成すると、自動的に対応するテストコードも生成します。
+テストコードは './test' 以下に配置します。
+generateコマンドでコントローラやモデルを生成すると、自動的に対応するテストコードも生成されます。
+StaticPagesのテストコードとして 'test/controllers/static_pages_controller_test.rb' が生成されています。
 
-StaticPagesのテストコードとして `test/controllers/static_pages_controller_test.rb` が生成されました。
-
-[source, rb]
+[source, ruby]
 .test/controllers/static_pages_controller_test.rb
 ----
 require 'test_helper'
@@ -160,7 +136,9 @@ class StaticPagesControllerTest < ActionDispatch::IntegrationTest
 end
 ----
 
-現在実装されているテストはgenerateコマンドで生成したhomeアクション用のテストコードの雛形だけです。
-
-assert_responseは応答結果をチェックする処理です。
-'static_pages/home' に対して実行したgetメソッドの応答結果が `:success` （成功）となっていることを確認しています。
+自動生成直後に実装されているテストはgenerateコマンドで生成したhomeアクション用のテストコードだけです。 +
+テストコード内のassert_responseメソッドは応答結果をチェックする処理です。
+直前で実行しているgetメソッドの結果をチェックしています。 +
+getメソッドの引数に使われているstatic_pages_home_urlはStaticPagesコントローラのhomeアクションが紐づいているURL(絶対パス)を返却します。
+つまり、ここのgetメソッドはhome画面を取得しているのです。
+そして、getメソッドでhome画面を取得した際の応答結果が `:success` （成功）となっていることを確認しています。取得に失敗している場合、テスト結果はNGとなり、先ほど実行したテストのfailuresにカウントされるのです。

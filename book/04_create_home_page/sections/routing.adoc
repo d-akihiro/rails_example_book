@@ -3,36 +3,11 @@
 
 Webブラウザで
 link:http://localhost:3000/static_pages/home[http://localhost:3000/static_pages/home]
-へアクセスするとホーム画面が表示されるようになりました。
+へアクセスするとホーム画面が表示されます。 +
+これは '/static_pages/home' というパスへアクセスするとStaticPagesコントローラのhomeアクションが呼び出されるためです。 +
+このパスとアクションの紐付け(ルーティング)は 'config/routing.rb' で実装されています。
 
-これはこれで良いのですが、アプリケーションの初めの画面なのに、表示するときに毎回 `static_pages/home` まで指定するのは煩わしいです。
-そこで、ルートでホーム画面が表示されるようにルーティングを変更してみます。
-
-まず、現在のルーティングがどうなっているか確認します。
-`rails routs` コマンドで確認することができます。
-
-[source, console]
-.ルーティング確認
-----
-$ rails routes
-           Prefix Verb URI Pattern                  Controller#Action
-static_pages_home GET  /static_pages/home(.:format) static_pages#home
-
-----
-
-表示までに少しだけ時間がかかりますが、これはルーティングの生成を行なっているからです。
-
-rails routesにより表示された内容によると、現在 `/static_pages/home` というURLのGETリクエストにstatic_pagesコントローラのhomeアクションが割り当たっている事がわかります。
-
-コントローラとアクションは**<コントローラ名>#<アクション名>**という表記になります。
-この表記はRailsの至る所で使われる表現なので頭の片隅に置いておきましょう。
-
-また、 `<Prefix>_path` という名前のURLパスを取得するヘルパメソッドが生成されます。
-自動テストでstatic_pages_home_pathというメソッドを使用していましたね。
-
-このルーティングは `routes.rb` から生成されます。
-
-[source, rb]
+[source, ruby]
 .config/routes.rb
 ----
 Rails.application.routes.draw do
@@ -40,25 +15,35 @@ Rails.application.routes.draw do
 end
 ----
 
-getメソッドに `static_pages/home` というURLパスだけを指定しています。
-この場合、暗黙的にstatic_pagesコントローラのhomeアクションへ紐づけられます。
-明示的に書くなら以下のようになります。
+ここで呼び出しているgetメソッドにより、 'static_pages/home' とStaticPagesコントローラのhomeアクションを紐づけています。 +
+上記は紐づける先のアクションを指定するtoオプションが省略されているので判りにくいのですが、省略せずに書くと`get 'static_pages/home', to:'static_pages#home'`のようになります。 +
+toオプションの表記は `<コントローラ名>#<アクション名>` です。
+getメソッドではtoオプションを省略すると、指定されたパスから `<コントローラ名>/<アクション名>` のように判定するのですね。 +
+ルーティングの実装に使用するメソッドはgetメソッドだけではなく、postメソッドやdeleteメソッドなどのhttpメソッドに対応したものに加えて、crud操作を行う時に必要になるルーティングを一括で実装するresourcesメソッドやルート（ '/' ）とアクションの紐付けに使用するrootメソッドなどの便利なメソッドも用意されています。
 
-[source, rb]
-.config/routes.rb
+resourcesメソッドのような複数のルーティングを一括で実装するようなメソッドを使用したり、大量のルーティングを実装したりした場合、 'routes.rb' の記述を読んでルーティングを判断するのはなかなか大変になってきます。
+
+RoRには 'routes.rb' が実装するルーティングを表示する 'rails routes' コマンドという便利なコマンドがあります。使ってみましょう。
+
+[source, console]
+.ルーティング確認
 ----
-Rails.application.routes.draw do
-  get 'static_pages/home', to:'static_pages#home'
-end
+$ rails routes
+           Prefix Verb URI Pattern                  Controller#Action
+static_pages_home GET  /static_pages/home(.:format) static_pages#home
 ----
 
-toオプションが省略して表記されていたという事ですね。
+'routes.rb' を実際に実行してパスを生成しているので、少し時間がかかりますが、正確なルーティングが判るのでとても便利です。
 
-さて、ルートにStaticPagesのhomeアクションを割り当てるように `routes.rb` を変更します。
-ルートパスにアクションを割り当てる場合、getメソッドを使っても良いですが、
-ルートパスのアクションわりあてようのrootメソッドというものがあります。
+さて、home画面はアプリケーションの初めの画面なので、表示するパスは 'static_pages/home' ではなく、ルートパスで表示したいです。 +
+そこで、ルーティングを変更し、ルートパスでhome画面が表示されるようにしてみましょう。
 
-[source, rb]
+==== 実装
+
+ルートパスのGETにアクションを紐づける場合、getメソドでも実装できますが、rootメソッドというルートパスへの紐付け専用に用意されたメソッドがあるのでこれを使って実装してみましょう。
+`root <アクションの指定>` のように使用します。
+
+[source, ruby]
 .config/routes.rb
 ----
 Rails.application.routes.draw do
@@ -66,9 +51,7 @@ Rails.application.routes.draw do
 end
 ----
 
-このようにrootメソッドを使用するとコントローラとアクションの指定だけで済みます。
-
-変更したら再度 `rails routs` コマンドで確認してみましょう。
+`rails routs` コマンドで確認してみましょう。
 
 [source, console]
 ----
@@ -78,14 +61,15 @@ Prefix Verb URI Pattern Controller#Action
 ----
 
 ばっちりStaticPagesコントローラのhomeアクションがルートパスに設定されていますね。
+link:http://localhost:3000[http://localhost:3000]でホーム画面が表示されるようになりました。
 
+==== テスト
 
-ルーティングを変更したので、Home画面表示のテストで使用していたURLパス取得用のヘルパメソッドが生成されなくなりました。
-テストを実行して見ると失敗ではなくエラーが出てしまいます。
+ルーティングを変更したので、Home画面表示のテストで使用していたURLパス取得用のヘルパメソッドであるstatic_pages_home_urlメソッドが生成されなくなりました。
+テストを実行して見ると失敗ではなくエラーが出てしまいます。 +
+そこで、テストのURLパス取得用ヘルパメソッドをルートパスのURLパス取得するroot_pathに置き換えましょう。
 
-テストのURLパス取得用ヘルパメソッドをルートパスのURLパス取得するroot_pathに置き換えましょう。
-
-[source, rb]
+[source, ruby]
 ----
 require 'test_helper'
 

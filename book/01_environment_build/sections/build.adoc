@@ -39,7 +39,7 @@ $ vagrant up
 link:https://github.com/d-akihiro/rails_example_box[https://github.com/d-akihiro/rails_example_box]
 
 . Githubページ
-image:images/github_repository.png[Git hub]
+image::images/github_repository.png[Git hub]
 ====
 
 
@@ -52,7 +52,7 @@ image:images/github_repository.png[Git hub]
 
 まず、ホストOSの 'c:/vagrant/rails_example_box/work' フォルダ内に 'rails_example_sample' というフォルダが出来ていることを確認してください。 +
 これが、チュートリアルで作成するアプリのサンプルです。 +
-ホストOSの 'c:/vagrant/rails_example_box/work' フォルダを仮想マシン内の './work' フォルダと共有フォルダに設定してあります。 +
+ホストOSの 'c:/vagrant/rails_example_box/work' フォルダを仮想マシン内の '~/work' フォルダと共有フォルダに設定してあります。 +
 チュートリアルではこの共有フォルダ内でアプリ開発を行うことで、ホストOS上のエディタからファイル編集を行えます。
 
 次に、既に仮想マシンは起動した状態になっているので、以下のコマンドで仮想マシンに接続し、サンプルのWebアプリケーションを起動します。

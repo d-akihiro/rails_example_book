@@ -1,0 +1,83 @@
+=== 最大文字列長（maximum length）バリデーション
+
+最大文字列長のバリデーションです。 +
+名前は50文字まで、メールアドレスは255文字までの仕様とします。
+
+==== テスト
+
+まずは、最大文字列長がNGのパターンのテストを実装します。 +
+名前が51文字によるバリデーションNGとメールアドレスが256文字によるバリデーションNGの2パターンのテストを実装します。
+
+Rubyでは `'文字列' * n` とすると、'文字列'をn回繰り返した文字列になります。これを使ってテストで使用する長い文字列を生成します。 +
+後でメールアドレスのパターンチェックを実装するので、メールアドレスはきちんと形式に乗っ取った形にします。 +
+以下のように実装してください。
+
+[source, ruby]
+.test/models/user_test.rb
+----
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  # <1>
+  test 'name should not be too long' do # <1>
+    @user.name = 'a' * 51
+    assert_not @user.valid?
+  end
+
+  # <2>
+  test 'email should not be too long' do
+    @user.email = 'a' * 244 + '@example.com'
+    assert_not @user.valid?
+  end
+end
+----
+
+<1> 名前の文字数がNG（51文字）の場合のテストケース
+
+<2> メールアドレスの文字数がNG（256文字）の場合のテストケース
+
+テストを実行すると実装した<1>と<2>が失敗します。
+
+このテストを成功するように、最大文字列長のバリデーションを実装していきます。
+
+==== 実装
+
+validatesメソッドには文字列長のバリデーションを設定するための**length**オプションが提供されているので、これを使って最大文字列長を設定します。 +
+lengthオプションは最大文字列長（maximum）だけではなく、最小文字列長（minimum）など指定できるので、ハッシュ形式でmaximumを指定します。 +
+以下のように実装してください。
+
+[source, ruby]
+./app/models/user.rb
+----
+class User < ApplicationRecord
+  validates :name, presence:true, length:{maximum:50}
+  validates :email, presence:true, length:{maximum:255}
+end
+----
+
+実際にバリデーションが動作するかテストを実行して確認してみます。
+
+
+[source, console]
+.最大文字列長バリデーションの確認
+----
+<1>
+$ rails console
+
+<2>
+irb> user = User.new(name: 'a' * 51, email: 'user@example.com')
+irb> user.valid?
+
+<3>
+irb> user = User.new(name: 'Example User', email: 'a' * 244 + '@example.com')
+irb> user.valid?
+----
+
+<1> irb起動
+
+<2> 名前の文字数がNG（51文字）の場合のバリデーションNGを確認
+
+<3> メールアドレスの文字数がNG（256文字）の場合のバリデーションNGを確認
+
+空欄のバリデーションが想定通り動作していることが確認できました。 +
+テストを実行すると、先ほど実装したテストが成功するようになっています。
